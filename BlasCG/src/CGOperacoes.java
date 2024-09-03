@@ -5,6 +5,20 @@ import org.jblas.MatrixFunctions;
 public class CGOperacoes {
 
 	
+	public static DoubleMatrix GanSinal(DoubleMatrix g, int N, int S) {
+        DoubleMatrix gModificado = DoubleMatrix.zeros(S*N); 
+        
+        for (int c = 0; c < N; c++) {
+            for (int l = 0; l < S; l++) {
+            	double gammaL = 100 + (1.0 / 20.0) * (l + 1) * Math.sqrt(l + 1); 
+                double glc = g.get(l*c); 
+                gModificado.put(l*c, glc * gammaL); 
+            }
+        }
+        
+        return gModificado; 
+    }
+	
 	public static double FatorReducao(DoubleMatrix H) {
         DoubleMatrix Ht = H.transpose();
         DoubleMatrix HtH = Ht.mmul(H);

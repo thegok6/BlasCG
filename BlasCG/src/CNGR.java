@@ -5,6 +5,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import org.jblas.DoubleMatrix;
 import org.jblas.Eigen;
@@ -15,6 +16,7 @@ public class CNGR {
 	{
 		int i = 0;
 		double erro = 1.0;
+		g = CGOperacoes.GanSinal(g, 64,436);
 		DoubleMatrix f = DoubleMatrix.zeros(h.columns);
 		DoubleMatrix r = g.sub(h.mmul(f));
 		DoubleMatrix z = (h.transpose()).mmul(r);
@@ -86,7 +88,22 @@ public class CNGR {
 	
 	
 	
-	
+    public static DoubleMatrix gerarModeloAleatorio(int minRows, int maxRows, int minSqrtColumns, int maxSqrtColumns) {
+        Random random = new Random();
+        int rows = random.nextInt(maxRows - minRows + 1) + minRows;
+        int sqrtColumns = random.nextInt(maxSqrtColumns - minSqrtColumns + 1) + minSqrtColumns;
+        int columns = sqrtColumns * sqrtColumns;
+        DoubleMatrix modelo = DoubleMatrix.zeros(rows, columns);
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < columns; j++) {
+                if (random.nextDouble() < 0.04) {
+                    modelo.put(i, j, random.nextDouble() * 1e-6);
+                }
+            }
+        }
+        
+        return modelo;
+    }
 	
 	
 	
@@ -95,10 +112,15 @@ public class CNGR {
 	
 	public static void main(String[] args)
 	{
-		DoubleMatrix H = lerCSVParaDoubleMatrix("C:\\Users\\ichib\\OneDrive\\Documents\\Arquivos para backup\\Blas\\h1.csv");
+        int minRows = 8000;
+        int maxRows = 56000;
+        int minSqrtColumns = 20;
+        int maxSqrtColumns = 80;
+		DoubleMatrix H = lerCSVParaDoubleMatrix("exemplo2h.csv");
+		//DoubleMatrix H = gerarModeloAleatorio(minRows, maxRows, minSqrtColumns, maxSqrtColumns);
 		DoubleMatrix f = DoubleMatrix.rand(H.columns, 1);
         //DoubleMatrix g = H.mmul(f);
-		DoubleMatrix g = lerCSVParaDoubleMatrix("C:\\Users\\ichib\\OneDrive\\Documents\\Arquivos para backup\\Blas\\g2.csv");
+		DoubleMatrix g = lerCSVParaDoubleMatrix("sinal2g.csv");
         DoubleMatrix Imagem = Calcular(H, g);
         ImageGenerator.gerarImagem(Imagem, "teste.png");
         salvarEmCSV(Imagem, "texto.csv");
