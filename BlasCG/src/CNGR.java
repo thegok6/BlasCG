@@ -3,20 +3,33 @@ import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
+import java.lang.management.OperatingSystemMXBean;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 import org.jblas.DoubleMatrix;
 import org.jblas.Eigen;
 import org.jblas.MatrixFunctions;
+
+import oshi.SystemInfo;
+import oshi.hardware.GlobalMemory;
 public class CNGR {
-	
+	private static int iteracoes = 0;
+	private static long memoriaMediaUsada = 0;
 	public static DoubleMatrix Calcular(DoubleMatrix h, DoubleMatrix g)
 	{
-		int i = 0;
+		Runtime runtime = Runtime.getRuntime();
+        SystemInfo systemInfo = new SystemInfo();
+        GlobalMemory memory = systemInfo.getHardware().getMemory();
+        List<Long> leiturasDeMemoria = new ArrayList<>();
+		OperatingSystemMXBean osBean = ManagementFactory.getPlatformMXBean(OperatingSystemMXBean.class);
+		memoriaMediaUsada = 0;
+		iteracoes = 0;
 		double erro = 1.0;
-		g = CGOperacoes.GanSinal(g, 64,436);
+		
 		DoubleMatrix f = DoubleMatrix.zeros(h.columns);
 		DoubleMatrix r = g.sub(h.mmul(f));
 		DoubleMatrix z = (h.transpose()).mmul(r);
@@ -26,7 +39,7 @@ public class CNGR {
 		double alp = 0;
 		while(erro > 0.0001)
 		{
-			i++;
+			iteracoes++;
 			w = CalcularW(h, p);
 			alp = CalcularAlpha(z, w);
 			f = CalcularF(f, alp, p);
@@ -37,9 +50,12 @@ public class CNGR {
 			beta = CalcularBeta(z,zAntes);
 			p = CalcularP(z, beta, p);
 			erro = Erro(r, rAntes);
-			System.out.println("Erro: " + erro);
+            long memoriaDisponivel = memory.getAvailable();
+            long memoriaUsada = runtime.totalMemory() - runtime.freeMemory();
+            leiturasDeMemoria.add(memoriaUsada);
 		}
-		System.out.println("Interacoes: " + i);
+        memoriaMediaUsada = calcularMediaDeMemoria(leiturasDeMemoria);
+		System.out.println("Interacoes: " + iteracoes);
 		return f;
 	}
 	
@@ -49,6 +65,11 @@ public class CNGR {
         double erro = N - C;
         return Math.abs(erro);
     }
+    public static int getI()
+    {return iteracoes;}
+    
+    public static long getCPU()
+    {return memoriaMediaUsada;}
 		
 	
 	private static double CalcularAlpha(DoubleMatrix z_i, DoubleMatrix w_i) {
@@ -116,15 +137,15 @@ public class CNGR {
         int maxRows = 56000;
         int minSqrtColumns = 20;
         int maxSqrtColumns = 80;
-		DoubleMatrix H = lerCSVParaDoubleMatrix("exemplo2h.csv");
-		//DoubleMatrix H = gerarModeloAleatorio(minRows, maxRows, minSqrtColumns, maxSqrtColumns);
-		DoubleMatrix f = DoubleMatrix.rand(H.columns, 1);
-        //DoubleMatrix g = H.mmul(f);
-		DoubleMatrix g = lerCSVParaDoubleMatrix("sinal2g.csv");
+		DoubleMatrix H = lerCSVParaDoubleMatrix("h1.csv");
+		
+		
+        
+		DoubleMatrix g = lerCSVParaDoubleMatrix("g2.csv");
         DoubleMatrix Imagem = Calcular(H, g);
         ImageGenerator.gerarImagem(Imagem, "teste.png");
         salvarEmCSV(Imagem, "texto.csv");
-        //System.out.println(H);
+        
 	}
 	
 	
@@ -181,6 +202,18 @@ public class CNGR {
         } catch (IOException e) {
             e.printStackTrace(); 
         }
+    }
+	
+	
+
+
+    
+    public static long calcularMediaDeMemoria(List<Long> leiturasDeMemoria) {
+        long soma = 0;
+        for (long leitura : leiturasDeMemoria) {
+            soma += leitura;
+        }
+        return soma / leiturasDeMemoria.size(); 
     }
 	
 	

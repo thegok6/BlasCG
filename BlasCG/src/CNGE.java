@@ -82,12 +82,12 @@ public class CNGE {
 	{
 		DoubleMatrix H = lerCSVParaDoubleMatrix("C:\\Users\\ichib\\OneDrive\\Documents\\Arquivos para backup\\Blas\\h1.csv");
 		DoubleMatrix f = DoubleMatrix.rand(H.columns, 1);
-        //DoubleMatrix g = H.mmul(f);
+        
 		DoubleMatrix g = lerCSVParaDoubleMatrix("C:\\Users\\ichib\\OneDrive\\Documents\\Arquivos para backup\\Blas\\g2.csv");
         DoubleMatrix Imagem = Calcular(H, g);
         ImageGenerator.gerarImagem(Imagem, "teste.png");
         salvarEmCSV(Imagem, "texto.csv");
-        //System.out.println(H);
+        
 	}
 	
 	

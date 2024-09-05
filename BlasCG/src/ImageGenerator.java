@@ -23,7 +23,7 @@ public class ImageGenerator {
         BufferedImage image = new BufferedImage(size, size, BufferedImage.TYPE_BYTE_GRAY);
 
         
-        double brilho = 2.5; 
+        double brilho = 2.8; 
 
         for (int i = 0; i < size; i++) {
             for (int j = 0; j < size; j++) {
@@ -31,6 +31,10 @@ public class ImageGenerator {
                 double value = f.get(index) * brilho;  
                 int pixelValue = (int) (value * 200);
                 pixelValue = Math.min(255, Math.max(0, pixelValue));  
+                if (pixelValue > 140)
+                {
+                	pixelValue = 125;
+                }
                 image.setRGB(j, i, new Color(pixelValue, pixelValue, pixelValue).getRGB());
             }
         }
@@ -39,7 +43,7 @@ public class ImageGenerator {
         BufferedImage rotatedImage = new BufferedImage(size, size, BufferedImage.TYPE_BYTE_GRAY);
         for (int i = 0; i < size; i++) {
             for (int j = 0; j < size; j++) {
-                rotatedImage.setRGB(size - 1 - j, i, image.getRGB(i, j));
+                rotatedImage.setRGB(j, i, image.getRGB(i, j));
             }
         }
 
@@ -92,32 +96,4 @@ public class ImageGenerator {
 
 
 
-/*public static BufferedImage criarImagem(DoubleMatrix f) {
-    int size = (int) Math.sqrt(f.length);
-    BufferedImage image = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
 
-    for (int i = 0; i < size; i++) {
-        for (int j = 0; j < size; j++) {
-            int index = i * size + j;
-            double value = f.get(index);
-
-            // Calcula o valor da opacidade (transparência inversa)
-            int alpha = (int) (255 * value);
-            alpha = Math.min(255, Math.max(0, alpha));  // Garante que esteja entre 0 e 255
-
-            // Cor branca com opacidade variável
-            int pixelValue = new Color(255, 255, 255, alpha).getRGB();
-            image.setRGB(j, i, pixelValue);
-        }
-    }
-
-    // Rotaciona a imagem em 90 graus, se necessário
-    BufferedImage rotatedImage = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
-    for (int i = 0; i < size; i++) {
-        for (int j = 0; j < size; j++) {
-            rotatedImage.setRGB(size - 1 - j, i, image.getRGB(i, j));
-        }
-    }
-
-    return rotatedImage;
-}*/

@@ -1,19 +1,11 @@
 import javax.imageio.ImageIO;
 import javax.swing.*;
-
 import org.jblas.DoubleMatrix;
-
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.Socket;
 import java.util.Random;
 
@@ -26,8 +18,6 @@ public class UsuarioClient extends JFrame {
     private JTextArea messageArea;
     private DoubleMatrix H;
     private DoubleMatrix g;
-    
-    
 
     public UsuarioClient() {
         setTitle("Usuario Client");
@@ -39,7 +29,7 @@ public class UsuarioClient extends JFrame {
         gbc.insets = new Insets(10, 10, 10, 10);
         gbc.fill = GridBagConstraints.BOTH;
 
-        // Campos de entrada
+        
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 0.2;
@@ -80,7 +70,7 @@ public class UsuarioClient extends JFrame {
         algoritmoField = new JTextField();
         add(algoritmoField, gbc);
 
-        // Área de mensagem
+        
         gbc.gridx = 0;
         gbc.gridy = 4;
         gbc.gridwidth = 2;
@@ -92,7 +82,7 @@ public class UsuarioClient extends JFrame {
         JScrollPane scrollPane = new JScrollPane(messageArea);
         add(scrollPane, gbc);
 
-        // Botão de envio
+        
         gbc.gridx = 0;
         gbc.gridy = 5;
         gbc.gridwidth = 2;
@@ -121,66 +111,61 @@ public class UsuarioClient extends JFrame {
             OutputStream emissor = socket.getOutputStream();
             DataOutputStream saidaDados = new DataOutputStream(emissor);
 
-            // Envia dados ao servidor
+            
             saidaDados.writeUTF(nomeUsuario);
             saidaDados.flush();
             saidaDados.writeUTF(algoritmo);
             saidaDados.flush();
+
             GerarModeloSinal();
             saidaDados.writeInt(H.rows);
             saidaDados.flush();
             saidaDados.writeInt(H.columns);
             saidaDados.flush();
+
             for (int i = 0; i < H.length; i++) {
-            	saidaDados.writeDouble(H.get(i));
-            	saidaDados.flush();
+                saidaDados.writeDouble(H.get(i));
+                saidaDados.flush();
             }
+
             saidaDados.writeInt(g.rows);
             saidaDados.flush();
             saidaDados.writeInt(g.columns);
             saidaDados.flush();
 
-            // Send the data
+            
             for (int i = 0; i < g.length; i++) {
-            	saidaDados.writeDouble(g.get(i));
-            	saidaDados.flush();
+                saidaDados.writeDouble(g.get(i));
+                saidaDados.flush();
             }
-            
-            
 
-            // Recebe a resposta do servidor
+            
             InputStream receptor = socket.getInputStream();
             DataInputStream entradaDados = new DataInputStream(receptor);
-            
-            
+
+            messageArea.append("Aguardando na fila...\n");
+
             
             int length = entradaDados.readInt();
             byte[] imageBytes = new byte[length];
-
-            // Receive the image byte array
             entradaDados.readFully(imageBytes);
 
-            // Convert byte array back to BufferedImage
+            
             ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(imageBytes);
             BufferedImage receivedImage = ImageIO.read(byteArrayInputStream);
             ImageDisplay.windows(receivedImage);
             ImageIO.write(receivedImage, "png", new File("imagem.png"));
-            
-            
-            
-            String resposta = entradaDados.readUTF();  // Lê a resposta do servidor
 
-            messageArea.append("Detalhes: " + resposta + "\n");
+            
+            String resposta = entradaDados.readUTF();
+            messageArea.append("Resposta do servidor: " + resposta + "\n");
 
         } catch (IOException e) {
             messageArea.append("Erro de conexão: " + e.getMessage() + "\n");
         }
     }
-    
-    
-    
-    private void GerarModeloSinal()
-    {
+
+    private void GerarModeloSinal() {
         int minRows = 10000;
         int maxRows = 12000;
         int minSqrtColumns = 25;
@@ -190,6 +175,7 @@ public class UsuarioClient extends JFrame {
         int sqrtColumns = random.nextInt(maxSqrtColumns - minSqrtColumns + 1) + minSqrtColumns;
         int columns = sqrtColumns * sqrtColumns;
         DoubleMatrix modelo = DoubleMatrix.zeros(rows, columns);
+
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < columns; j++) {
                 if (random.nextDouble() < 0.01) {
@@ -197,11 +183,10 @@ public class UsuarioClient extends JFrame {
                 }
             }
         }
-		H = modelo;
-		DoubleMatrix f = DoubleMatrix.rand(H.columns, 1);
+        H = modelo;
+        DoubleMatrix f = DoubleMatrix.rand(H.columns, 1);
         g = H.mmul(f);
     }
-    
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> new UsuarioClient());

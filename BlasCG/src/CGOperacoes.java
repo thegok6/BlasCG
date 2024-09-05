@@ -10,7 +10,7 @@ public class CGOperacoes {
         
         for (int c = 0; c < N; c++) {
             for (int l = 0; l < S; l++) {
-            	double gammaL = 100 + (1.0 / 20.0) * (l + 1) * Math.sqrt(l + 1); 
+            	double gammaL = 100 + (1.0 / 20.0) * (l) * Math.sqrt(l); 
                 double glc = g.get(l*c); 
                 gModificado.put(l*c, glc * gammaL); 
             }
