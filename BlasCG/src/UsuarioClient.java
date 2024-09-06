@@ -234,7 +234,7 @@ public class UsuarioClient extends JFrame {
             ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(imageBytes);
             BufferedImage receivedImage = ImageIO.read(byteArrayInputStream);
             ImageDisplay.windows(receivedImage);
-            ImageIO.write(receivedImage, "png", new File("imagem.png"));
+            ImageIO.write(receivedImage, "png", new File(t + ".png"));
 
             
             String resposta = entradaDados.readUTF();
@@ -251,7 +251,7 @@ public class UsuarioClient extends JFrame {
         int minSqrtColumns = 60;
         int maxSqrtColumns = 60;
         Random random = new Random();
-        int rows = 20000;
+        int rows = 25600;
         int sqrtColumns = 60;
         int columns = sqrtColumns * sqrtColumns;
         String t = algoritmoField.getText().toUpperCase();

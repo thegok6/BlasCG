@@ -3,8 +3,10 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -107,7 +109,8 @@ public class Server {
             }*/
             DoubleMatrix h = lerCSVParaDoubleMatrix("h.csv");
             DoubleMatrix g = lerCSVParaDoubleMatrix("g.csv");
-            
+            SimpleDateFormat formato = new SimpleDateFormat("HH:mm:ss:SSSS");
+            String Hora_antes = formato.format(new Date());
             BufferedImage img;
             Runtime runtime = Runtime.getRuntime();
             runtime.gc();
@@ -132,6 +135,7 @@ public class Server {
                 System.out.println("Item 4");
             img = ImageGenerator.criarImagem(CNGR.Calcular(h, g, 0,0), 1, 200);
             }
+            String Hora_depois = formato.format(new Date());
             Thread.sleep(200);
             long[] postTicks = processor.getSystemCpuLoadTicks();
             double usoCPU = calcularUsoCpu(prevTicks, postTicks);
@@ -140,7 +144,7 @@ public class Server {
             long memoriaGasta = memoriaDepois - memoriaAntes;
             long tempoGasto = System.currentTimeMillis() - tempoInicio;
             
-            String teste = "Número de iterações: " + CNGR.getI() + "\n" + " Tempo de execução (milisegundos): " + (tempoGasto) + "\n" + "Memória média usada durante o algoritmo: " + CNGR.getCPU() / (1024 * 1024) + " MB" + "\n" + 
+            String teste = "Início: " + Hora_antes + "\n" + "Fim: " + Hora_depois + "\n" + "Número de iterações: " + CNGR.getI() + "\n" + "Tempo de execução (milisegundos): " + (tempoGasto) + "\n" + "Memória média usada durante o algoritmo: " + CNGR.getCPU() / (1024 * 1024) + " MB" + "\n" + 
             		"Uso médio de CPU durante o algoritmo: " + (usoCPU * 100) + "%";
             
             OutputStream enviar = clientSocket.getOutputStream();
