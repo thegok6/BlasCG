@@ -32,8 +32,8 @@ public class Server {
     public static void main(String[] args) {
         try (ServerSocket serverSocket = new ServerSocket()) {
 
-            InetAddress serverInetAddress = InetAddress.getByName(SERVER_IP);
-            serverSocket.bind(new InetSocketAddress(serverInetAddress, PORT));
+            InetAddress serverInetAddress = InetAddress.getByName(args[0]);
+            serverSocket.bind(new InetSocketAddress(serverInetAddress, Integer.parseInt(args[1])));
 
             System.out.println("Servidor aberto: " + SERVER_IP + ":" + PORT);
 
