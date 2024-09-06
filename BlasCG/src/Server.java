@@ -4,6 +4,8 @@ import java.lang.management.OperatingSystemMXBean;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -20,7 +22,7 @@ import java.awt.image.BufferedImage;
 public class Server {
 
     private static final int PORT = 5178;
-    private static final String SERVER_IP = "localhost";
+    private static final String SERVER_IP = "26.193.34.184";
 
     
     private static final BlockingQueue<Socket> filaDeClientes = new LinkedBlockingQueue<>();
@@ -80,23 +82,30 @@ public class Server {
             System.out.println("Algoritmo: " + algoritmo);
             System.out.println("Data de início: " + dataInicio);
 
-            int rows = entradaDados.readInt();
-            int columns = entradaDados.readInt();
-
-            double[] data = new double[rows * columns];
+            int rowsH = entradaDados.readInt();
+            int columnsH = entradaDados.readInt();
+            int rowsG = entradaDados.readInt();
+            int columnsG = entradaDados.readInt();
+            long sizeH = entradaDados.readLong();
+            long sizeG = entradaDados.readLong();
+            
+            System.out.println("Recebendo arquivo H.csv de " + sizeH + " bytes...");
+            salvarArquivoCSV(entradaDados, "h.csv", sizeH);  // Recebe e salva H.csv
+            System.out.println("Recebendo arquivo G.csv de " + sizeG + " bytes...");
+            salvarArquivoCSV(entradaDados, "g.csv", sizeG);  // Recebe e salva G.csv
+            System.out.println("Arquivos H.csv e G.csv recebidos e salvos.");
+            /*double[] data = new double[rows * columns];
             for (int i = 0; i < data.length; i++) {
                 data[i] = entradaDados.readDouble();
             }
-            DoubleMatrix h = new DoubleMatrix(rows, columns, data);
 
-            rows = entradaDados.readInt();
-            columns = entradaDados.readInt();
 
             data = new double[rows * columns];
             for (int i = 0; i < data.length; i++) {
                 data[i] = entradaDados.readDouble();
-            }
-            DoubleMatrix g = new DoubleMatrix(rows, columns, data);
+            }*/
+            DoubleMatrix h = lerCSVParaDoubleMatrix("h.csv");
+            DoubleMatrix g = lerCSVParaDoubleMatrix("g.csv");
             
             
             Runtime runtime = Runtime.getRuntime();
@@ -149,5 +158,52 @@ public class Server {
         long totalUsedCpu = totalCpu - idle - iowait;
 
         return (double) totalUsedCpu / totalCpu;
+    }
+    
+    private static void salvarArquivoCSV(DataInputStream entradaDados, String nomeArquivo, long fileSize) throws IOException {
+        // Define o tamanho do buffer para 20MB
+        byte[] buffer = new byte[20 * 1024 * 1024];
+        long totalBytesRead = 0;
+        int bytesRead;
+
+        try (FileOutputStream fileOutputStream = new FileOutputStream(nomeArquivo)) {
+            // Continue lendo até que todo o arquivo seja recebido
+            while (totalBytesRead < fileSize && (bytesRead = entradaDados.read(buffer, 0, Math.min(buffer.length, (int)(fileSize - totalBytesRead)))) != -1) {
+                fileOutputStream.write(buffer, 0, bytesRead);
+                totalBytesRead += bytesRead;
+            }
+        }
+
+        System.out.println(nomeArquivo + " salvo com sucesso.");
+    }
+    
+    public static DoubleMatrix lerCSVParaDoubleMatrix(String csvFile) {
+        List<double[]> rows = new ArrayList<>();
+        String line;
+        String csvSplitBy = ","; 
+
+        try (BufferedReader br = new BufferedReader(new FileReader(csvFile))) {
+            while ((line = br.readLine()) != null) {
+                String[] values = line.split(csvSplitBy);
+                double[] row = new double[values.length];
+                
+                for (int i = 0; i < values.length; i++) {
+                    row[i] = Double.parseDouble(values[i]); 
+                }
+                
+                rows.add(row);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
+        double[][] data = new double[rows.size()][];
+        for (int i = 0; i < rows.size(); i++) {
+            data[i] = rows.get(i);
+        }
+
+
+        return new DoubleMatrix(data);
     }
 }

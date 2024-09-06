@@ -53,6 +53,7 @@ public class CNGR {
             long memoriaDisponivel = memory.getAvailable();
             long memoriaUsada = runtime.totalMemory() - runtime.freeMemory();
             leiturasDeMemoria.add(memoriaUsada);
+            System.out.println(erro);
 		}
         memoriaMediaUsada = calcularMediaDeMemoria(leiturasDeMemoria);
 		System.out.println("Interacoes: " + iteracoes);

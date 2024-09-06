@@ -23,7 +23,7 @@ public class ImageGenerator {
         BufferedImage image = new BufferedImage(size, size, BufferedImage.TYPE_BYTE_GRAY);
 
         
-        double brilho = 2.8; 
+        double brilho = 1.5;
 
         for (int i = 0; i < size; i++) {
             for (int j = 0; j < size; j++) {

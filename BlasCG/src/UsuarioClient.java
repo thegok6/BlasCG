@@ -7,6 +7,8 @@ import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 public class UsuarioClient extends JFrame {
@@ -63,7 +65,7 @@ public class UsuarioClient extends JFrame {
         gbc.gridx = 0;
         gbc.gridy = 3;
         gbc.weightx = 0.2;
-        add(new JLabel("Algoritmo:"), gbc);
+        add(new JLabel("Escolha se modelo é imagem de teste 1 2 3 / 4 5 6 ou aleatório"), gbc);
 
         gbc.gridx = 1;
         gbc.weightx = 0.8;
@@ -94,14 +96,19 @@ public class UsuarioClient extends JFrame {
         sendButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                sendMessage();
+                try {
+					sendMessage();
+				} catch (InterruptedException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
             }
         });
 
         setVisible(true);
     }
 
-    private void sendMessage() {
+    private void sendMessage() throws InterruptedException {
         String serverIP = ipField.getText();
         int port = Integer.parseInt(portField.getText());
         String nomeUsuario = nomeField.getText();
@@ -122,22 +129,92 @@ public class UsuarioClient extends JFrame {
             saidaDados.flush();
             saidaDados.writeInt(H.columns);
             saidaDados.flush();
-
-            for (int i = 0; i < H.length; i++) {
-                saidaDados.writeDouble(H.get(i));
-                saidaDados.flush();
-            }
-
             saidaDados.writeInt(g.rows);
             saidaDados.flush();
             saidaDados.writeInt(g.columns);
             saidaDados.flush();
+            
+            File fileH = null;
+            File fileG = null;
+            if(algoritmoField.getText().equals("1")) 
+            {
+            	fileH = new File("h1.csv");
+            	fileG = new File("g1.csv");
+            }
+            else if(algoritmoField.getText().equals("2")) 
+            {
+            	fileH = new File("h1.csv");
+            	fileG = new File("g2.csv");
+            }
+            else if(algoritmoField.getText().equals("3")) 
+            {
+            	fileH = new File("h1.csv");
+            	fileG = new File("g3.csv");
+            }
+            else if(algoritmoField.getText().equals("4")) 
+            {
+            	fileH = new File("h2.csv");
+            	fileG = new File("g4.csv");
+            }
+            else if(algoritmoField.getText().equals("5")) 
+            {
+            	fileH = new File("h2.csv");
+            	fileG = new File("g5.csv");
+            }
+            else if(algoritmoField.getText().equals("6")) 
+            {
+            	fileH = new File("h2.csv");
+            	fileG = new File("g6.csv");
+            }
+            else {
+            	fileH = new File("Hal.csv");
+            	fileG = new File("Gal.csv");
+            }
+            long fileHSize = fileH.length();
+            long fileGSize = fileG.length();
+
+            /*for (int i = 0; i < H.length; i++) {
+                saidaDados.writeDouble(H.get(i));
+                saidaDados.flush();
+            }*/
+            //byte[] buffer = new byte[(int) fileHSize]; // 2GB de buffer
+            saidaDados.writeLong(fileHSize);
+            saidaDados.flush();
+            saidaDados.writeLong(fileGSize);
+            saidaDados.flush();
+            byte[] buffer = new byte[20 * 1024 * 1024];
+
+            try (FileInputStream fileInputStreamH = new FileInputStream(fileH);
+                 FileInputStream fileInputStreamG = new FileInputStream(fileG)) {
+
+                int bytesRead;
+                
+                // Envia o arquivo H em blocos de 20MB
+                while ((bytesRead = fileInputStreamH.read(buffer)) != -1) {
+                    saidaDados.write(buffer, 0, bytesRead);
+                    saidaDados.flush();
+                }
+
+                // Pausa breve para assegurar que o buffer não seja misturado
+                Thread.sleep(1000);
+
+                // Envia o arquivo G em blocos de 20MB
+                while ((bytesRead = fileInputStreamG.read(buffer)) != -1) {
+                    saidaDados.write(buffer, 0, bytesRead);
+                    saidaDados.flush();
+                }
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+
 
             
-            for (int i = 0; i < g.length; i++) {
+            /*for (int i = 0; i < g.length; i++) {
                 saidaDados.writeDouble(g.get(i));
                 saidaDados.flush();
-            }
+            }*/
 
             
             InputStream receptor = socket.getInputStream();
@@ -174,8 +251,39 @@ public class UsuarioClient extends JFrame {
         int rows = random.nextInt(maxRows - minRows + 1) + minRows;
         int sqrtColumns = random.nextInt(maxSqrtColumns - minSqrtColumns + 1) + minSqrtColumns;
         int columns = sqrtColumns * sqrtColumns;
+        if(algoritmoField.getText().equals("1")) 
+        {
+        	H = lerCSVParaDoubleMatrix("h1.csv");
+        	g = lerCSVParaDoubleMatrix("g1.csv");
+        }
+        else if(algoritmoField.getText().equals("2")) 
+        {
+        	H = lerCSVParaDoubleMatrix("h1.csv");
+        	g = lerCSVParaDoubleMatrix("g2.csv");
+        }
+        else if(algoritmoField.getText().equals("3")) 
+        {
+        	H = lerCSVParaDoubleMatrix("h1.csv");
+        	g = lerCSVParaDoubleMatrix("g3.csv");
+        }
+        else if(algoritmoField.getText().equals("4")) 
+        {
+        	H = lerCSVParaDoubleMatrix("h2.csv");
+        	g = lerCSVParaDoubleMatrix("g4.csv");
+        }
+        else if(algoritmoField.getText().equals("5")) 
+        {
+        	H = lerCSVParaDoubleMatrix("h2.csv");
+        	g = lerCSVParaDoubleMatrix("g5.csv");
+        }
+        else if(algoritmoField.getText().equals("6")) 
+        {
+        	H = lerCSVParaDoubleMatrix("h2.csv");
+        	g = lerCSVParaDoubleMatrix("g6.csv");
+        }
+        else
+        {
         DoubleMatrix modelo = DoubleMatrix.zeros(rows, columns);
-
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < columns; j++) {
                 if (random.nextDouble() < 0.01) {
@@ -186,9 +294,59 @@ public class UsuarioClient extends JFrame {
         H = modelo;
         DoubleMatrix f = DoubleMatrix.rand(H.columns, 1);
         g = H.mmul(f);
+        salvarDoubleMatrixEmCSV(H, "Hal.csv");
+        salvarDoubleMatrixEmCSV(g, "Gal.csv");
+        }
     }
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> new UsuarioClient());
+    }
+    
+    
+    public static DoubleMatrix lerCSVParaDoubleMatrix(String csvFile) {
+        List<double[]> rows = new ArrayList<>();
+        String line;
+        String csvSplitBy = ","; 
+
+        try (BufferedReader br = new BufferedReader(new FileReader(csvFile))) {
+            while ((line = br.readLine()) != null) {
+                String[] values = line.split(csvSplitBy);
+                double[] row = new double[values.length];
+                
+                for (int i = 0; i < values.length; i++) {
+                    row[i] = Double.parseDouble(values[i]); 
+                }
+                
+                rows.add(row);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
+        double[][] data = new double[rows.size()][];
+        for (int i = 0; i < rows.size(); i++) {
+            data[i] = rows.get(i);
+        }
+
+
+        return new DoubleMatrix(data);
+    }
+    
+    public static void salvarDoubleMatrixEmCSV(DoubleMatrix matrix, String caminhoArquivo) {
+        try (FileWriter writer = new FileWriter(caminhoArquivo)) {
+            for (int i = 0; i < matrix.rows; i++) {
+                for (int j = 0; j < matrix.columns; j++) {
+                    writer.append(String.valueOf(matrix.get(i, j)));
+                    if (j < matrix.columns - 1) {
+                        writer.append(",");  // Se não for o último valor da linha, adiciona vírgula
+                    }
+                }
+                writer.append("\n");  // Vai para a próxima linha
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
