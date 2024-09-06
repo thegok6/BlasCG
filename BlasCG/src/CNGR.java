@@ -19,8 +19,9 @@ import oshi.hardware.GlobalMemory;
 public class CNGR {
 	private static int iteracoes = 0;
 	private static long memoriaMediaUsada = 0;
-	public static DoubleMatrix Calcular(DoubleMatrix h, DoubleMatrix g)
+	public static DoubleMatrix Calcular(DoubleMatrix h, DoubleMatrix g,int n,int ganho)
 	{
+		
 		Runtime runtime = Runtime.getRuntime();
         SystemInfo systemInfo = new SystemInfo();
         GlobalMemory memory = systemInfo.getHardware().getMemory();
@@ -29,7 +30,8 @@ public class CNGR {
 		memoriaMediaUsada = 0;
 		iteracoes = 0;
 		double erro = 1.0;
-		
+		if(ganho != 0)
+		g = CGOperacoes.GanhoSinal(g, n, ganho);
 		DoubleMatrix f = DoubleMatrix.zeros(h.columns);
 		DoubleMatrix r = g.sub(h.mmul(f));
 		DoubleMatrix z = (h.transpose()).mmul(r);
@@ -132,7 +134,7 @@ public class CNGR {
 	
 	
 	
-	public static void main(String[] args)
+	/*public static void main(String[] args)
 	{
         int minRows = 8000;
         int maxRows = 56000;
@@ -143,12 +145,12 @@ public class CNGR {
 		
         
 		DoubleMatrix g = lerCSVParaDoubleMatrix("g2.csv");
-        DoubleMatrix Imagem = Calcular(H, g);
+        //DoubleMatrix Imagem = Calcular(H, g);
         ImageGenerator.gerarImagem(Imagem, "teste.png");
         salvarEmCSV(Imagem, "texto.csv");
         
 	}
-	
+	*/
 	
 	
 	

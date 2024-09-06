@@ -75,7 +75,7 @@ public class Server {
             DataInputStream entradaDados = new DataInputStream(receptor);
 
             String nome = entradaDados.readUTF();
-            String algoritmo = entradaDados.readUTF();
+            String algoritmo = entradaDados.readUTF().toLowerCase();
             LocalDate dataInicio = LocalDate.now();
 
             System.out.println("Usuário: " + nome);
@@ -88,6 +88,7 @@ public class Server {
             int columnsG = entradaDados.readInt();
             long sizeH = entradaDados.readLong();
             long sizeG = entradaDados.readLong();
+            //String ganho = entradaDados.readUTF();
             
             System.out.println("Recebendo arquivo H.csv de " + sizeH + " bytes...");
             salvarArquivoCSV(entradaDados, "h.csv", sizeH);  // Recebe e salva H.csv
@@ -107,7 +108,7 @@ public class Server {
             DoubleMatrix h = lerCSVParaDoubleMatrix("h.csv");
             DoubleMatrix g = lerCSVParaDoubleMatrix("g.csv");
             
-            
+            BufferedImage img;
             Runtime runtime = Runtime.getRuntime();
             runtime.gc();
             long memoriaAntes = runtime.totalMemory() - runtime.freeMemory();
@@ -116,7 +117,22 @@ public class Server {
             SystemInfo systemInfo = new SystemInfo();
             CentralProcessor processor = systemInfo.getHardware().getProcessor();
             long[] prevTicks = processor.getSystemCpuLoadTicks();
-            BufferedImage img = ImageGenerator.criarImagem(CNGR.Calcular(h, g));
+            if(algoritmo.equals("1g") || algoritmo.equals("2g") || algoritmo.equals("3g")) {
+            System.out.println("Item 1");
+            img = ImageGenerator.criarImagem(CNGR.Calcular(h, g, 64,794), 0.3, 50);}
+            else if(algoritmo.equals("4g") || algoritmo.equals("5g") || algoritmo.equals("6g")) {
+            System.out.println("Item 2");
+            img = ImageGenerator.criarImagem(CNGR.Calcular(h, g, 64 ,436), 0.3, 50);}
+            else if(algoritmo.equals("ganho")) {
+            System.out.println("Item 3");
+            img = ImageGenerator.criarImagem(CNGR.Calcular(h, g, 64 ,400), 0.3, 50);
+            }
+            else
+            {
+                System.out.println("Item 4");
+            img = ImageGenerator.criarImagem(CNGR.Calcular(h, g, 0,0), 1, 200);
+            }
+            Thread.sleep(200);
             long[] postTicks = processor.getSystemCpuLoadTicks();
             double usoCPU = calcularUsoCpu(prevTicks, postTicks);
             long tempoFim = System.currentTimeMillis();
@@ -145,6 +161,9 @@ public class Server {
         }
     }
     private static double calcularUsoCpu(long[] prevTicks, long[] postTicks) {
+    	long totalCpu = 0;
+    	long totalUsedCpu = 0;
+    	while(totalCpu == 0 || totalUsedCpu == 0) {
         long user = postTicks[TickType.USER.getIndex()] - prevTicks[TickType.USER.getIndex()];
         long nice = postTicks[TickType.NICE.getIndex()] - prevTicks[TickType.NICE.getIndex()];
         long sys = postTicks[TickType.SYSTEM.getIndex()] - prevTicks[TickType.SYSTEM.getIndex()];
@@ -153,9 +172,14 @@ public class Server {
         long irq = postTicks[TickType.IRQ.getIndex()] - prevTicks[TickType.IRQ.getIndex()];
         long softirq = postTicks[TickType.SOFTIRQ.getIndex()] - prevTicks[TickType.SOFTIRQ.getIndex()];
         long steal = postTicks[TickType.STEAL.getIndex()] - prevTicks[TickType.STEAL.getIndex()];
+        
 
-        long totalCpu = user + nice + sys + idle + iowait + irq + softirq + steal;
-        long totalUsedCpu = totalCpu - idle - iowait;
+        totalCpu = user + nice + sys + idle + iowait + irq + softirq + steal;
+        totalUsedCpu = totalCpu - idle - iowait;
+        System.out.println("totalCpu: " + totalCpu);
+        System.out.println("totalUsedCpu: " + totalUsedCpu);
+    	}
+        
 
         return (double) totalUsedCpu / totalCpu;
     }

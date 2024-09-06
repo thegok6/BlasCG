@@ -9,7 +9,7 @@ import java.io.IOException;
 public class ImageGenerator {
 
     public static BufferedImage gerarImagem(DoubleMatrix f, String outputPath) {
-    	BufferedImage i = criarImagem(f);
+    	BufferedImage i = criarImagem(f, 0.3, 50);
         try {
             ImageIO.write(i, "png", new File(outputPath));  
         } catch (IOException e) {
@@ -18,23 +18,23 @@ public class ImageGenerator {
         return i;
     }
     
-    public static BufferedImage criarImagem(DoubleMatrix f) {
+    public static BufferedImage criarImagem(DoubleMatrix f, double brilho, int va) {
         int size = (int) Math.sqrt(f.length);
         BufferedImage image = new BufferedImage(size, size, BufferedImage.TYPE_BYTE_GRAY);
 
         
-        double brilho = 1.5;
+        //double brilho = 0.3;
 
         for (int i = 0; i < size; i++) {
             for (int j = 0; j < size; j++) {
                 int index = i * size + j;
                 double value = f.get(index) * brilho;  
-                int pixelValue = (int) (value * 200);
+                int pixelValue = (int) (value * va);
                 pixelValue = Math.min(255, Math.max(0, pixelValue));  
-                if (pixelValue > 140)
+                /*if (pixelValue > 140)
                 {
                 	pixelValue = 125;
-                }
+                }*/
                 image.setRGB(j, i, new Color(pixelValue, pixelValue, pixelValue).getRGB());
             }
         }

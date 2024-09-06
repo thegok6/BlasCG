@@ -75,6 +75,22 @@ public class CGOperacoes {
     	return aplicarGanho(g, calcularGanhoDeSinal(N, S));
     }
     
+    public static DoubleMatrix GanhoSinal(DoubleMatrix g, int N, int S)
+    {
+        System.out.println("Ganho de sinal");
+    	DoubleMatrix aux = DoubleMatrix.zeros(N*S, 1);
+    	double gamma = 0;
+    	for(int c = 1; c <= N; c++) {
+    		for(int l = 1; l <= S; l++) {
+    			gamma = g.get(l*c - 1)*(100 + (1/20)*(l)*Math.sqrt(l));
+    			aux.put(l*c - 1, gamma);
+    		}
+    	}
+    	return aux;
+    }
+    
+    
+    
     public static void main(String[] args) {
         double[][] data = {
             {1, 2, 3},

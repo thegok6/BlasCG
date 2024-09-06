@@ -65,7 +65,7 @@ public class UsuarioClient extends JFrame {
         gbc.gridx = 0;
         gbc.gridy = 3;
         gbc.weightx = 0.2;
-        add(new JLabel("Escolha se modelo é imagem de teste 1 2 3 / 4 5 6 ou aleatório"), gbc);
+        add(new JLabel("Escolha se modelo é imagem de teste 1 2 3 / 4 5 6 / ganho aleatório ou aleatório"), gbc);
 
         gbc.gridx = 1;
         gbc.weightx = 0.8;
@@ -133,35 +133,38 @@ public class UsuarioClient extends JFrame {
             saidaDados.flush();
             saidaDados.writeInt(g.columns);
             saidaDados.flush();
+            /*saidaDados.writeUTF(algoritmo);
+            saidaDados.flush();*/
             
             File fileH = null;
             File fileG = null;
-            if(algoritmoField.getText().equals("1")) 
+            String t = algoritmoField.getText().toUpperCase();
+            if(algoritmoField.getText().equals("1") || t.equals("1G")) 
             {
             	fileH = new File("h1.csv");
             	fileG = new File("g1.csv");
             }
-            else if(algoritmoField.getText().equals("2")) 
+            else if(algoritmoField.getText().equals("2") || t.equals("2G")) 
             {
             	fileH = new File("h1.csv");
             	fileG = new File("g2.csv");
             }
-            else if(algoritmoField.getText().equals("3")) 
+            else if(algoritmoField.getText().equals("3") || t.equals("3G")) 
             {
             	fileH = new File("h1.csv");
             	fileG = new File("g3.csv");
             }
-            else if(algoritmoField.getText().equals("4")) 
+            else if(algoritmoField.getText().equals("4") || t.equals("4G")) 
             {
             	fileH = new File("h2.csv");
             	fileG = new File("g4.csv");
             }
-            else if(algoritmoField.getText().equals("5")) 
+            else if(algoritmoField.getText().equals("5") || t.equals("5G")) 
             {
             	fileH = new File("h2.csv");
             	fileG = new File("g5.csv");
             }
-            else if(algoritmoField.getText().equals("6")) 
+            else if(algoritmoField.getText().equals("6") || t.equals("6G")) 
             {
             	fileH = new File("h2.csv");
             	fileG = new File("g6.csv");
@@ -243,40 +246,41 @@ public class UsuarioClient extends JFrame {
     }
 
     private void GerarModeloSinal() {
-        int minRows = 10000;
-        int maxRows = 12000;
-        int minSqrtColumns = 25;
-        int maxSqrtColumns = 35;
+        int minRows = 25600;
+        int maxRows = 25600;
+        int minSqrtColumns = 60;
+        int maxSqrtColumns = 60;
         Random random = new Random();
-        int rows = random.nextInt(maxRows - minRows + 1) + minRows;
-        int sqrtColumns = random.nextInt(maxSqrtColumns - minSqrtColumns + 1) + minSqrtColumns;
+        int rows = 20000;
+        int sqrtColumns = 60;
         int columns = sqrtColumns * sqrtColumns;
-        if(algoritmoField.getText().equals("1")) 
+        String t = algoritmoField.getText().toUpperCase();
+        if(algoritmoField.getText().equals("1") || t.equals("1G")) 
         {
         	H = lerCSVParaDoubleMatrix("h1.csv");
         	g = lerCSVParaDoubleMatrix("g1.csv");
         }
-        else if(algoritmoField.getText().equals("2")) 
+        else if(algoritmoField.getText().equals("2") || t.equals("2G")) 
         {
         	H = lerCSVParaDoubleMatrix("h1.csv");
         	g = lerCSVParaDoubleMatrix("g2.csv");
         }
-        else if(algoritmoField.getText().equals("3")) 
+        else if(algoritmoField.getText().equals("3") || t.equals("3G")) 
         {
         	H = lerCSVParaDoubleMatrix("h1.csv");
         	g = lerCSVParaDoubleMatrix("g3.csv");
         }
-        else if(algoritmoField.getText().equals("4")) 
+        else if(algoritmoField.getText().equals("4") || t.equals("4G")) 
         {
         	H = lerCSVParaDoubleMatrix("h2.csv");
         	g = lerCSVParaDoubleMatrix("g4.csv");
         }
-        else if(algoritmoField.getText().equals("5")) 
+        else if(algoritmoField.getText().equals("5") || t.equals("5G")) 
         {
         	H = lerCSVParaDoubleMatrix("h2.csv");
         	g = lerCSVParaDoubleMatrix("g5.csv");
         }
-        else if(algoritmoField.getText().equals("6")) 
+        else if(algoritmoField.getText().equals("6") || t.equals("6G")) 
         {
         	H = lerCSVParaDoubleMatrix("h2.csv");
         	g = lerCSVParaDoubleMatrix("g6.csv");
