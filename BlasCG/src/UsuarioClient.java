@@ -246,12 +246,12 @@ public class UsuarioClient extends JFrame {
     }
 
     private void GerarModeloSinal() {
-        int minRows = 25600;
-        int maxRows = 25600;
+        int minRows = 11520;
+        int maxRows = 11520;
         int minSqrtColumns = 60;
         int maxSqrtColumns = 60;
         Random random = new Random();
-        int rows = 25600;
+        int rows = 11520;
         int sqrtColumns = 60;
         int columns = sqrtColumns * sqrtColumns;
         String t = algoritmoField.getText().toUpperCase();

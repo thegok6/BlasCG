@@ -135,7 +135,7 @@ public class UsuarioAleatorio {
             int minSqrtColumns = 60;
             int maxSqrtColumns = 60;
             Random random = new Random();
-            int rows = 25600;
+            int rows = 11520;
             int sqrtColumns = 60;
             int columns = sqrtColumns * sqrtColumns;
             

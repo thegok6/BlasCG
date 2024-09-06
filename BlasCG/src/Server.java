@@ -128,7 +128,7 @@ public class Server {
             img = ImageGenerator.criarImagem(CNGR.Calcular(h, g, 64 ,436), 0.3, 50);}
             else if(algoritmo.equals("ganho")) {
             System.out.println("Item 3");
-            img = ImageGenerator.criarImagem(CNGR.Calcular(h, g, 64 ,400), 0.3, 50);
+            img = ImageGenerator.criarImagem(CNGR.Calcular(h, g, 64 ,180), 0.3, 50);
             }
             else
             {
