@@ -6,10 +6,10 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="lib" path="C:/Users/ichib/git/repositorio/BlasCG/jblas-1.2.4.jar"/>
 	<classpathentry kind="lib" path="C:/Users/ichib/git/repositorio/BlasCG/oshi-core-6.6.3.jar"/>
 	<classpathentry kind="lib" path="C:/Users/ichib/git/repositorio/BlasCG/jna-5.14.0.jar"/>
 	<classpathentry kind="lib" path="C:/Users/ichib/git/repositorio/BlasCG/jna-platform-5.14.0.jar"/>
 	<classpathentry kind="lib" path="C:/Users/ichib/git/repositorio/BlasCG/slf4j-api-2.0.16.jar"/>
+	<classpathentry kind="lib" path="C:/Users/ichib/git/repositorio/BlasCG/jblas-1.2.4.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

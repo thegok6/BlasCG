@@ -38,7 +38,7 @@ public class UsuarioAleatorio {
                 usuario.append(caracteres.charAt(index));
             }
             nomeUsuario = new String(usuario) + t;
-            String algoritmo = "ganho";
+            String algoritmo = "aleatorio";
             try (Socket socket = new Socket(serverIP, port)) {
                 OutputStream emissor = socket.getOutputStream();
                 DataOutputStream saidaDados = new DataOutputStream(emissor);

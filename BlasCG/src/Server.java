@@ -2,7 +2,12 @@ import java.io.*;
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
 import java.net.*;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -11,6 +16,8 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import org.jblas.DoubleMatrix;
 
@@ -32,9 +39,10 @@ public class Server {
     public static void main(String[] args) {
         try (ServerSocket serverSocket = new ServerSocket()) {
 
+            /*InetAddress serverInetAddress = InetAddress.getByName("192.168.18.17");
+            serverSocket.bind(new InetSocketAddress(serverInetAddress, Integer.parseInt("5178")));*/
             InetAddress serverInetAddress = InetAddress.getByName(args[0]);
             serverSocket.bind(new InetSocketAddress(serverInetAddress, Integer.parseInt(args[1])));
-
             System.out.println("Servidor aberto: " + SERVER_IP + ":" + PORT);
 
             
@@ -90,28 +98,28 @@ public class Server {
             int columnsG = entradaDados.readInt();
             long sizeH = entradaDados.readLong();
             long sizeG = entradaDados.readLong();
-            //String ganho = entradaDados.readUTF();
-            
+
             System.out.println("Recebendo arquivo H.csv de " + sizeH + " bytes...");
             salvarArquivoCSV(entradaDados, "h.csv", sizeH);  // Recebe e salva H.csv
+            File fH = new File("h.csv");
+           // decompressFileFromMemory(fH);
+
             System.out.println("Recebendo arquivo G.csv de " + sizeG + " bytes...");
             salvarArquivoCSV(entradaDados, "g.csv", sizeG);  // Recebe e salva G.csv
+            File fg = new File("g.csv");
+            //decompressFileFromMemory(new File("g.zip"));
+
             System.out.println("Arquivos H.csv e G.csv recebidos e salvos.");
-            /*double[] data = new double[rows * columns];
-            for (int i = 0; i < data.length; i++) {
-                data[i] = entradaDados.readDouble();
-            }
 
-
-            data = new double[rows * columns];
-            for (int i = 0; i < data.length; i++) {
-                data[i] = entradaDados.readDouble();
-            }*/
             DoubleMatrix h = lerCSVParaDoubleMatrix("h.csv");
             DoubleMatrix g = lerCSVParaDoubleMatrix("g.csv");
+            fH.delete();
+            fg.delete();
+
             SimpleDateFormat formato = new SimpleDateFormat("HH:mm:ss:SSSS");
             String Hora_antes = formato.format(new Date());
             BufferedImage img;
+
             Runtime runtime = Runtime.getRuntime();
             runtime.gc();
             long memoriaAntes = runtime.totalMemory() - runtime.freeMemory();
@@ -120,21 +128,17 @@ public class Server {
             SystemInfo systemInfo = new SystemInfo();
             CentralProcessor processor = systemInfo.getHardware().getProcessor();
             long[] prevTicks = processor.getSystemCpuLoadTicks();
-            if(algoritmo.equals("1g") || algoritmo.equals("2g") || algoritmo.equals("3g")) {
-            System.out.println("Item 1");
-            img = ImageGenerator.criarImagem(CNGR.Calcular(h, g, 64,794), 0.3, 50);}
-            else if(algoritmo.equals("4g") || algoritmo.equals("5g") || algoritmo.equals("6g")) {
-            System.out.println("Item 2");
-            img = ImageGenerator.criarImagem(CNGR.Calcular(h, g, 64 ,436), 0.3, 50);}
-            else if(algoritmo.equals("ganho")) {
-            System.out.println("Item 3");
-            img = ImageGenerator.criarImagem(CNGR.Calcular(h, g, 64 ,180), 0.3, 50);
+
+            if (algoritmo.equals("1g") || algoritmo.equals("2g") || algoritmo.equals("3g")) {
+                img = ImageGenerator.criarImagem(CNGR.Calcular(h, g, 64, 794), 0.25, 40);
+            } else if (algoritmo.equals("4g") || algoritmo.equals("5g") || algoritmo.equals("6g")) {
+                img = ImageGenerator.criarImagem(CNGR.Calcular(h, g, 64, 436), 0.25, 40);
+            } else if (algoritmo.equals("ganho")) {
+                img = ImageGenerator.criarImagem(CNGR.Calcular(h, g, 64, 180), 0.25, 40);
+            } else {
+                img = ImageGenerator.criarImagem(CNGR.Calcular(h, g, 0, 0), 1, 200);
             }
-            else
-            {
-                System.out.println("Item 4");
-            img = ImageGenerator.criarImagem(CNGR.Calcular(h, g, 0,0), 1, 200);
-            }
+
             String Hora_depois = formato.format(new Date());
             Thread.sleep(200);
             long[] postTicks = processor.getSystemCpuLoadTicks();
@@ -143,10 +147,10 @@ public class Server {
             long memoriaDepois = runtime.totalMemory() - runtime.freeMemory();
             long memoriaGasta = memoriaDepois - memoriaAntes;
             long tempoGasto = System.currentTimeMillis() - tempoInicio;
-            
+
             String teste = "Início: " + Hora_antes + "\n" + "Fim: " + Hora_depois + "\n" + "Número de iterações: " + CNGR.getI() + "\n" + "Tempo de execução (milisegundos): " + (tempoGasto) + "\n" + "Memória média usada durante o algoritmo: " + CNGR.getCPU() / (1024 * 1024) + " MB" + "\n" + 
-            		"Uso médio de CPU durante o algoritmo: " + (usoCPU * 100) + "%";
-            
+                    "Uso médio de CPU durante o algoritmo: " + (usoCPU * 100) + "%";
+
             OutputStream enviar = clientSocket.getOutputStream();
             DataOutputStream enviarDados = new DataOutputStream(enviar);
             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
@@ -155,15 +159,18 @@ public class Server {
             enviarDados.writeInt(imageBytes.length);
             enviarDados.write(imageBytes);
             enviarDados.flush();
-            enviarDados.writeUTF(teste); 
+            enviarDados.writeUTF(teste);
             enviarDados.flush();
 
             clientSocket.close();
+            g = null;
+            h = null;
 
         } catch (IOException e) {
             System.err.println("Erro ao processar cliente: " + e.getMessage());
         }
     }
+
     private static double calcularUsoCpu(long[] prevTicks, long[] postTicks) {
     	long totalCpu = 0;
     	long totalUsedCpu = 0;
@@ -188,16 +195,22 @@ public class Server {
         return (double) totalUsedCpu / totalCpu;
     }
     
-    private static void salvarArquivoCSV(DataInputStream entradaDados, String nomeArquivo, long fileSize) throws IOException {
-        // Define o tamanho do buffer para 20MB
-        byte[] buffer = new byte[20 * 1024 * 1024];
-        long totalBytesRead = 0;
-        int bytesRead;
+    public static void salvarArquivoCSV(DataInputStream entradaDados, String nomeArquivo, long fileSize) throws IOException {
+        try (FileChannel fileChannel = FileChannel.open(
+                Path.of(nomeArquivo), 
+                StandardOpenOption.CREATE, 
+                StandardOpenOption.READ,  // Add READ permission
+                StandardOpenOption.WRITE)) {
 
-        try (FileOutputStream fileOutputStream = new FileOutputStream(nomeArquivo)) {
-            // Continue lendo até que todo o arquivo seja recebido
+            // Memory-map the output file
+            MappedByteBuffer mappedBuffer = fileChannel.map(FileChannel.MapMode.READ_WRITE, 0, fileSize);
+
+            byte[] buffer = new byte[1024 * 1024]; // 1MB buffer
+            long totalBytesRead = 0;
+            int bytesRead;
+
             while (totalBytesRead < fileSize && (bytesRead = entradaDados.read(buffer, 0, Math.min(buffer.length, (int)(fileSize - totalBytesRead)))) != -1) {
-                fileOutputStream.write(buffer, 0, bytesRead);
+                mappedBuffer.put(buffer, 0, bytesRead);
                 totalBytesRead += bytesRead;
             }
         }
@@ -205,7 +218,7 @@ public class Server {
         System.out.println(nomeArquivo + " salvo com sucesso.");
     }
     
-    public static DoubleMatrix lerCSVParaDoubleMatrix(String csvFile) {
+    /*public static DoubleMatrix lerCSVParaDoubleMatrix(String csvFile) {
         List<double[]> rows = new ArrayList<>();
         String line;
         String csvSplitBy = ","; 
@@ -233,5 +246,98 @@ public class Server {
 
 
         return new DoubleMatrix(data);
+    }*/
+    
+    public static int[] getCSVDimensions(String csvFile) throws IOException {
+        int[] dimensions = new int[2]; // dimensions[0] = rows, dimensions[1] = cols
+        int rowCount = 0;
+        int colCount = 0;
+        
+        try (BufferedReader br = new BufferedReader(new FileReader(csvFile))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                rowCount++;
+                if (rowCount == 1) {
+                    String[] values = line.split(",");  // assuming comma-separated
+                    colCount = values.length;
+                }
+            }
+        } catch (IOException e) {
+            throw new IOException("Error reading CSV file: " + e.getMessage());
+        }
+        
+        dimensions[0] = rowCount;
+        dimensions[1] = colCount;
+        return dimensions;
+    }
+
+    // Main method to read CSV into DoubleMatrix using memory-mapped file
+    public static DoubleMatrix lerCSVParaDoubleMatrix(String filePath) throws IOException {
+        // First, get the number of rows and columns from the CSV
+        int[] dimensions = getCSVDimensions(filePath);
+        int rows = dimensions[0];
+        int cols = dimensions[1];
+
+        try (FileChannel fileChannel = FileChannel.open(Paths.get(filePath), StandardOpenOption.READ)) {
+            MappedByteBuffer buffer = fileChannel.map(FileChannel.MapMode.READ_ONLY, 0, fileChannel.size());
+
+            DoubleMatrix matrix = DoubleMatrix.zeros(rows, cols);
+            int row = 0;
+            int col = 0;
+            
+            // Temporary buffer to read CSV lines manually
+            StringBuilder sb = new StringBuilder();
+            
+            // Loop through the buffer to extract CSV data
+            while (buffer.hasRemaining()) {
+                char c = (char) buffer.get();
+                
+                if (c == ',') {
+                    // End of value, parse and store
+                    matrix.put(row, col, Double.parseDouble(sb.toString()));
+                    sb.setLength(0); // clear the StringBuilder for the next value
+                    col++;
+                } else if (c == '\n') {
+                    // End of line, store last value and move to the next row
+                    matrix.put(row, col, Double.parseDouble(sb.toString()));
+                    sb.setLength(0);
+                    row++;
+                    col = 0; // reset column index for next row
+                } else {
+                    sb.append(c); // Keep reading characters
+                }
+            }
+            return matrix;
+        }
+    }
+    
+    public static void decompressFileFromMemory(File zipFile) throws IOException {
+        try (FileInputStream fis = new FileInputStream(zipFile);
+             ZipInputStream zipIn = new ZipInputStream(fis)) {
+
+            ZipEntry zipEntry = zipIn.getNextEntry();
+            while (zipEntry != null) {
+                // Output to ByteArrayOutputStream in memory
+                ByteArrayOutputStream fH = new ByteArrayOutputStream();
+                byte[] buffer = new byte[1024];
+                int length;
+                while ((length = zipIn.read(buffer)) >= 0) {
+                    fH.write(buffer, 0, length);
+                }
+
+                // Save the decompressed entry (fH) to a file on disk
+                File outputFile = new File("h.csv");
+                try (FileOutputStream fos = new FileOutputStream(outputFile)) {
+                    fH.writeTo(fos);  // Save the content of fH to the file
+                }
+
+                System.out.println("Decompressed and saved entry: " + zipEntry.getName());
+
+                zipIn.closeEntry();
+                zipEntry = zipIn.getNextEntry();
+            }
+        } catch (IOException e) {
+            throw new IOException("Error decompressing file: " + e.getMessage());
+        }
     }
 }

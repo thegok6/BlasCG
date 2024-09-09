@@ -5,6 +5,10 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -21,7 +25,6 @@ public class CNGR {
 	private static long memoriaMediaUsada = 0;
 	public static DoubleMatrix Calcular(DoubleMatrix h, DoubleMatrix g,int n,int ganho)
 	{
-		
 		Runtime runtime = Runtime.getRuntime();
         SystemInfo systemInfo = new SystemInfo();
         GlobalMemory memory = systemInfo.getHardware().getMemory();
@@ -34,13 +37,17 @@ public class CNGR {
 		g = CGOperacoes.GanhoSinal(g, n, ganho);
 		DoubleMatrix f = DoubleMatrix.zeros(h.columns);
 		DoubleMatrix r = g.sub(h.mmul(f));
-		DoubleMatrix z = (h.transpose()).mmul(r);
+		DoubleMatrix H_T = h.transpose();
+		DoubleMatrix z = (H_T).mmul(r);
 		DoubleMatrix p = z;
 		DoubleMatrix w;
 		double beta = 0;
 		double alp = 0;
 		while(erro > 0.0001)
 		{
+			long startTime = System.currentTimeMillis();
+			long endTime = System.currentTimeMillis();
+			long timeSpent = (endTime - startTime);
 			iteracoes++;
 			w = CalcularW(h, p);
 			alp = CalcularAlpha(z, w);
@@ -48,7 +55,7 @@ public class CNGR {
 			DoubleMatrix rAntes = r;
 			r = CalcularR(r, alp, w);
 			DoubleMatrix zAntes = z;
-			z = CalcularZ(h, r);
+			z = CalcularZ(H_T, r);
 			beta = CalcularBeta(z,zAntes);
 			p = CalcularP(z, beta, p);
 			erro = Erro(r, rAntes);
@@ -94,7 +101,7 @@ public class CNGR {
     }
 	
 	private static DoubleMatrix CalcularZ(DoubleMatrix H_T, DoubleMatrix r) {
-        return (H_T.transpose()).mmul(r);
+        return (H_T).mmul(r);
     }
 	
 	private static double CalcularBeta(DoubleMatrix z_i_plus_1, DoubleMatrix z_i) {
@@ -104,8 +111,7 @@ public class CNGR {
     }
 	
 	private static DoubleMatrix CalcularP(DoubleMatrix z_i_plus_1, double beta_i, DoubleMatrix p_i) {
-        DoubleMatrix betaTimesP_i = p_i.mul(beta_i);
-        return z_i_plus_1.add(betaTimesP_i);
+        return z_i_plus_1.add(p_i.mul(beta_i));
     }
 	
 	
@@ -158,7 +164,7 @@ public class CNGR {
 	
 	
 	
-	public static DoubleMatrix lerCSVParaDoubleMatrix(String csvFile) {
+	/*public static DoubleMatrix lerCSVParaDoubleMatrix(String csvFile) {
         List<double[]> rows = new ArrayList<>();
         String line;
         String csvSplitBy = ","; 
@@ -186,7 +192,80 @@ public class CNGR {
 
 
         return new DoubleMatrix(data);
+    }*/
+	
+	
+	    public static int[] getCSVDimensions(String csvFile) throws IOException {
+        int[] dimensions = new int[2]; // dimensions[0] = rows, dimensions[1] = cols
+        int rowCount = 0;
+        int colCount = 0;
+        
+        try (BufferedReader br = new BufferedReader(new FileReader(csvFile))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                rowCount++;
+                if (rowCount == 1) {
+                    String[] values = line.split(",");  // assuming comma-separated
+                    colCount = values.length;
+                }
+            }
+        } catch (IOException e) {
+            throw new IOException("Error reading CSV file: " + e.getMessage());
+        }
+        
+        dimensions[0] = rowCount;
+        dimensions[1] = colCount;
+        return dimensions;
     }
+
+    // Main method to read CSV into DoubleMatrix using memory-mapped file
+    public static DoubleMatrix lerCSVParaDoubleMatrix(String filePath) throws IOException {
+        // First, get the number of rows and columns from the CSV
+        int[] dimensions = getCSVDimensions(filePath);
+        int rows = dimensions[0];
+        int cols = dimensions[1];
+
+        try (FileChannel fileChannel = FileChannel.open(Paths.get(filePath), StandardOpenOption.READ)) {
+            MappedByteBuffer buffer = fileChannel.map(FileChannel.MapMode.READ_ONLY, 0, fileChannel.size());
+
+            DoubleMatrix matrix = DoubleMatrix.zeros(rows, cols);
+            int row = 0;
+            int col = 0;
+            
+            // Temporary buffer to read CSV lines manually
+            StringBuilder sb = new StringBuilder();
+            
+            // Loop through the buffer to extract CSV data
+            while (buffer.hasRemaining()) {
+                char c = (char) buffer.get();
+                
+                if (c == ',') {
+                    // End of value, parse and store
+                    matrix.put(row, col, Double.parseDouble(sb.toString()));
+                    sb.setLength(0); // clear the StringBuilder for the next value
+                    col++;
+                } else if (c == '\n') {
+                    // End of line, store last value and move to the next row
+                    matrix.put(row, col, Double.parseDouble(sb.toString()));
+                    sb.setLength(0);
+                    row++;
+                    col = 0; // reset column index for next row
+                } else {
+                    sb.append(c); // Keep reading characters
+                }
+            }
+            return matrix;
+        }
+    }
+
+	
+	
+	
+	
+	
+	
+	
+	
 
 	
 	public static void salvarEmCSV(DoubleMatrix matriz, String nomeArquivo) {

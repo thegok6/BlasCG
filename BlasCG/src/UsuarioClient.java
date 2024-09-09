@@ -7,9 +7,17 @@ import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.Socket;
+import java.nio.ByteBuffer;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileChannel.MapMode;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 public class UsuarioClient extends JFrame {
 
@@ -118,7 +126,6 @@ public class UsuarioClient extends JFrame {
             OutputStream emissor = socket.getOutputStream();
             DataOutputStream saidaDados = new DataOutputStream(emissor);
 
-            
             saidaDados.writeUTF(nomeUsuario);
             saidaDados.flush();
             saidaDados.writeUTF(algoritmo);
@@ -133,110 +140,87 @@ public class UsuarioClient extends JFrame {
             saidaDados.flush();
             saidaDados.writeInt(g.columns);
             saidaDados.flush();
-            /*saidaDados.writeUTF(algoritmo);
-            saidaDados.flush();*/
-            
-            File fileH = null;
-            File fileG = null;
+
+            String fileH;
+            String fileG ;
             String t = algoritmoField.getText().toUpperCase();
-            if(algoritmoField.getText().equals("1") || t.equals("1G")) 
-            {
-            	fileH = new File("h1.csv");
-            	fileG = new File("g1.csv");
+            if (algoritmoField.getText().equals("1") || t.equals("1G")) {
+                fileH = ("h1.csv");
+                fileG = ("g1.csv");
+            } else if (algoritmoField.getText().equals("2") || t.equals("2G")) {
+                fileH = ("h1.csv");
+                fileG = ("g2.csv");
+            } else if (algoritmoField.getText().equals("3") || t.equals("3G")) {
+                fileH = ("h1.csv");
+                fileG = ("g3.csv");
+            } else if (algoritmoField.getText().equals("4") || t.equals("4G")) {
+                fileH = ("h2.csv");
+                fileG = ("g4.csv");
+            } else if (algoritmoField.getText().equals("5") || t.equals("5G")) {
+                fileH = ("h2.csv");
+                fileG = ("g5.csv");
+            } else if (algoritmoField.getText().equals("6") || t.equals("6G")) {
+                fileH = ("h2.csv");
+                fileG = ("g6.csv");
+            } else {
+                fileH = ("Hal.csv");
+                fileG = ("Gal.csv");
             }
-            else if(algoritmoField.getText().equals("2") || t.equals("2G")) 
-            {
-            	fileH = new File("h1.csv");
-            	fileG = new File("g2.csv");
-            }
-            else if(algoritmoField.getText().equals("3") || t.equals("3G")) 
-            {
-            	fileH = new File("h1.csv");
-            	fileG = new File("g3.csv");
-            }
-            else if(algoritmoField.getText().equals("4") || t.equals("4G")) 
-            {
-            	fileH = new File("h2.csv");
-            	fileG = new File("g4.csv");
-            }
-            else if(algoritmoField.getText().equals("5") || t.equals("5G")) 
-            {
-            	fileH = new File("h2.csv");
-            	fileG = new File("g5.csv");
-            }
-            else if(algoritmoField.getText().equals("6") || t.equals("6G")) 
-            {
-            	fileH = new File("h2.csv");
-            	fileG = new File("g6.csv");
-            }
-            else {
-            	fileH = new File("Hal.csv");
-            	fileG = new File("Gal.csv");
-            }
-            long fileHSize = fileH.length();
+
+            //fileH = compressFileToMemory(fileH);
+            /*long fileHSize = fileH.length();
             long fileGSize = fileG.length();
 
-            /*for (int i = 0; i < H.length; i++) {
-                saidaDados.writeDouble(H.get(i));
-                saidaDados.flush();
-            }*/
-            //byte[] buffer = new byte[(int) fileHSize]; // 2GB de buffer
             saidaDados.writeLong(fileHSize);
             saidaDados.flush();
             saidaDados.writeLong(fileGSize);
-            saidaDados.flush();
-            byte[] buffer = new byte[20 * 1024 * 1024];
+            saidaDados.flush();*/
 
-            try (FileInputStream fileInputStreamH = new FileInputStream(fileH);
-                 FileInputStream fileInputStreamG = new FileInputStream(fileG)) {
+            try (FileChannel fileChannelH = new FileInputStream(fileH).getChannel();
+                    FileChannel fileChannelG = new FileInputStream(fileG).getChannel()) {
+	                saidaDados.writeLong(fileChannelH.size());
+	                saidaDados.flush();
+	                saidaDados.writeLong(fileChannelG.size());
+	                saidaDados.flush();
+                   // Memory-map fileH
+                   MappedByteBuffer bufferH = fileChannelH.map(MapMode.READ_ONLY, 0, fileChannelH.size());
+                   byte[] bufferArrayH = new byte[bufferH.remaining()];
+                   bufferH.get(bufferArrayH);
 
-                int bytesRead;
-                
-                // Envia o arquivo H em blocos de 20MB
-                while ((bytesRead = fileInputStreamH.read(buffer)) != -1) {
-                    saidaDados.write(buffer, 0, bytesRead);
-                    saidaDados.flush();
-                }
+                   // Send fileH
+                   saidaDados.write(bufferArrayH);
+                   saidaDados.flush();
 
-                // Pausa breve para assegurar que o buffer não seja misturado
-                Thread.sleep(1000);
+                   // Brief pause to ensure buffer flush
+                   Thread.sleep(1000);
 
-                // Envia o arquivo G em blocos de 20MB
-                while ((bytesRead = fileInputStreamG.read(buffer)) != -1) {
-                    saidaDados.write(buffer, 0, bytesRead);
-                    saidaDados.flush();
-                }
+                   // Memory-map fileG
+                   MappedByteBuffer bufferG = fileChannelG.map(MapMode.READ_ONLY, 0, fileChannelG.size());
+                   byte[] bufferArrayG = new byte[bufferG.remaining()];
+                   bufferG.get(bufferArrayG);
 
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+                   // Send fileG
+                   saidaDados.write(bufferArrayG);
+                   saidaDados.flush();
 
+               } catch (IOException | InterruptedException e) {
+                   e.printStackTrace();
+               }
 
-
-            
-            /*for (int i = 0; i < g.length; i++) {
-                saidaDados.writeDouble(g.get(i));
-                saidaDados.flush();
-            }*/
-
-            
             InputStream receptor = socket.getInputStream();
             DataInputStream entradaDados = new DataInputStream(receptor);
 
             messageArea.append("Aguardando na fila...\n");
 
-            
             int length = entradaDados.readInt();
             byte[] imageBytes = new byte[length];
             entradaDados.readFully(imageBytes);
 
-            
             ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(imageBytes);
             BufferedImage receivedImage = ImageIO.read(byteArrayInputStream);
             ImageDisplay.windows(receivedImage);
             ImageIO.write(receivedImage, "png", new File(t + ".png"));
 
-            
             String resposta = entradaDados.readUTF();
             messageArea.append("Resposta do servidor: " + resposta + "\n");
 
@@ -245,7 +229,8 @@ public class UsuarioClient extends JFrame {
         }
     }
 
-    private void GerarModeloSinal() {
+
+    private void GerarModeloSinal() throws IOException {
         int minRows = 11520;
         int maxRows = 11520;
         int minSqrtColumns = 60;
@@ -308,7 +293,7 @@ public class UsuarioClient extends JFrame {
     }
     
     
-    public static DoubleMatrix lerCSVParaDoubleMatrix(String csvFile) {
+    /*public static DoubleMatrix lerCSVParaDoubleMatrix(String csvFile) {
         List<double[]> rows = new ArrayList<>();
         String line;
         String csvSplitBy = ","; 
@@ -336,6 +321,69 @@ public class UsuarioClient extends JFrame {
 
 
         return new DoubleMatrix(data);
+    }*/
+    
+    public static int[] getCSVDimensions(String csvFile) throws IOException {
+        int[] dimensions = new int[2]; // dimensions[0] = rows, dimensions[1] = cols
+        int rowCount = 0;
+        int colCount = 0;
+        
+        try (BufferedReader br = new BufferedReader(new FileReader(csvFile))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                rowCount++;
+                if (rowCount == 1) {
+                    String[] values = line.split(",");  // assuming comma-separated
+                    colCount = values.length;
+                }
+            }
+        } catch (IOException e) {
+            throw new IOException("Error reading CSV file: " + e.getMessage());
+        }
+        
+        dimensions[0] = rowCount;
+        dimensions[1] = colCount;
+        return dimensions;
+    }
+
+    // Main method to read CSV into DoubleMatrix using memory-mapped file
+    public static DoubleMatrix lerCSVParaDoubleMatrix(String filePath) throws IOException {
+        // First, get the number of rows and columns from the CSV
+        int[] dimensions = getCSVDimensions(filePath);
+        int rows = dimensions[0];
+        int cols = dimensions[1];
+
+        try (FileChannel fileChannel = FileChannel.open(Paths.get(filePath), StandardOpenOption.READ)) {
+            MappedByteBuffer buffer = fileChannel.map(FileChannel.MapMode.READ_ONLY, 0, fileChannel.size());
+
+            DoubleMatrix matrix = DoubleMatrix.zeros(rows, cols);
+            int row = 0;
+            int col = 0;
+            
+            // Temporary buffer to read CSV lines manually
+            StringBuilder sb = new StringBuilder();
+            
+            // Loop through the buffer to extract CSV data
+            while (buffer.hasRemaining()) {
+                char c = (char) buffer.get();
+                
+                if (c == ',') {
+                    // End of value, parse and store
+                    matrix.put(row, col, Double.parseDouble(sb.toString()));
+                    sb.setLength(0); // clear the StringBuilder for the next value
+                    col++;
+                } else if (c == '\n') {
+                    // End of line, store last value and move to the next row
+                    matrix.put(row, col, Double.parseDouble(sb.toString()));
+                    sb.setLength(0);
+                    row++;
+                    col = 0; // reset column index for next row
+                } else {
+                    sb.append(c); // Keep reading characters
+                }
+            }
+            return matrix;
+        }
     }
     
     public static void salvarDoubleMatrixEmCSV(DoubleMatrix matrix, String caminhoArquivo) {
@@ -353,4 +401,37 @@ public class UsuarioClient extends JFrame {
             e.printStackTrace();
         }
     }
+    
+    
+    public static File compressFileToMemory(File fileToCompress) throws IOException {
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        try (ZipOutputStream zipOut = new ZipOutputStream(byteArrayOutputStream);
+             FileInputStream fis = new FileInputStream(fileToCompress)) {
+
+            ZipEntry zipEntry = new ZipEntry("hrar");
+            zipOut.putNextEntry(zipEntry);
+
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = fis.read(buffer)) >= 0) {
+                zipOut.write(buffer, 0, length);
+            }
+        } catch (IOException e) {
+            throw new IOException("Error compressing file: " + e.getMessage());
+        }
+
+        // Convert the byte array to a File object
+        File compressedFile = new File("hrar" + ".zip");
+        try (FileOutputStream fos = new FileOutputStream(compressedFile)) {
+            byteArrayOutputStream.writeTo(fos);
+        }
+
+        return compressedFile;
+    }
+    
+    
+    
+    
+    
+    
 }
