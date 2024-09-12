@@ -10,6 +10,10 @@
 	<classpathentry kind="lib" path="C:/Users/ichib/git/repositorio/BlasCG/jna-5.14.0.jar"/>
 	<classpathentry kind="lib" path="C:/Users/ichib/git/repositorio/BlasCG/jna-platform-5.14.0.jar"/>
 	<classpathentry kind="lib" path="C:/Users/ichib/git/repositorio/BlasCG/slf4j-api-2.0.16.jar"/>
-	<classpathentry kind="lib" path="C:/Users/ichib/git/repositorio/BlasCG/jblas-1.2.4.jar"/>
+	<classpathentry kind="lib" path="C:/Users/ichib/git/repositorio/BlasCG/ejml-core-0.43.1.jar"/>
+	<classpathentry kind="lib" path="C:/Users/ichib/git/repositorio/BlasCG/ejml-dsparse-0.43.1.jar"/>
+	<classpathentry kind="lib" path="C:/Users/ichib/git/repositorio/BlasCG/ejml-all-0.43.1.jar"/>
+	<classpathentry kind="lib" path="C:/Users/ichib/git/repositorio/BlasCG/commons-math3-3.6.1.jar"/>
+	<classpathentry kind="lib" path="C:/Users/ichib/git/repositorio/BlasCG/jblas-1.2.5.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

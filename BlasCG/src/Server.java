@@ -39,10 +39,10 @@ public class Server {
     public static void main(String[] args) {
         try (ServerSocket serverSocket = new ServerSocket()) {
 
-            /*InetAddress serverInetAddress = InetAddress.getByName("192.168.18.17");
-            serverSocket.bind(new InetSocketAddress(serverInetAddress, Integer.parseInt("5178")));*/
-            InetAddress serverInetAddress = InetAddress.getByName(args[0]);
-            serverSocket.bind(new InetSocketAddress(serverInetAddress, Integer.parseInt(args[1])));
+            InetAddress serverInetAddress = InetAddress.getByName("192.168.18.17");
+            serverSocket.bind(new InetSocketAddress(serverInetAddress, Integer.parseInt("5178")));
+            /*InetAddress serverInetAddress = InetAddress.getByName(args[0]);
+            serverSocket.bind(new InetSocketAddress(serverInetAddress, Integer.parseInt(args[1])));*/
             System.out.println("Servidor aberto: " + SERVER_IP + ":" + PORT);
 
             
@@ -113,8 +113,6 @@ public class Server {
 
             DoubleMatrix h = lerCSVParaDoubleMatrix("h.csv");
             DoubleMatrix g = lerCSVParaDoubleMatrix("g.csv");
-            fH.delete();
-            fg.delete();
 
             SimpleDateFormat formato = new SimpleDateFormat("HH:mm:ss:SSSS");
             String Hora_antes = formato.format(new Date());
@@ -130,14 +128,16 @@ public class Server {
             long[] prevTicks = processor.getSystemCpuLoadTicks();
 
             if (algoritmo.equals("1g") || algoritmo.equals("2g") || algoritmo.equals("3g")) {
-                img = ImageGenerator.criarImagem(CNGR.Calcular(h, g, 64, 794), 0.25, 40);
+                img = ImageGenerator.criarImagem(CGNR.Calcular(h, g, 64, 794), 0.24, 38);
             } else if (algoritmo.equals("4g") || algoritmo.equals("5g") || algoritmo.equals("6g")) {
-                img = ImageGenerator.criarImagem(CNGR.Calcular(h, g, 64, 436), 0.25, 40);
+                img = ImageGenerator.criarImagem(CGNR.Calcular(h, g, 64, 436), 0.24, 38);
             } else if (algoritmo.equals("ganho")) {
-                img = ImageGenerator.criarImagem(CNGR.Calcular(h, g, 64, 180), 0.25, 40);
+                img = ImageGenerator.criarImagem(CGNR.Calcular(h, g, 64, 180), 0.24, 38);
             } else {
-                img = ImageGenerator.criarImagem(CNGR.Calcular(h, g, 0, 0), 1, 200);
+                img = ImageGenerator.criarImagem(CGNR.Calcular(h, g, 0, 0), 1, 200);
             }
+            fH.delete();
+            fg.delete();
 
             String Hora_depois = formato.format(new Date());
             Thread.sleep(200);
@@ -148,7 +148,7 @@ public class Server {
             long memoriaGasta = memoriaDepois - memoriaAntes;
             long tempoGasto = System.currentTimeMillis() - tempoInicio;
 
-            String teste = "Início: " + Hora_antes + "\n" + "Fim: " + Hora_depois + "\n" + "Número de iterações: " + CNGR.getI() + "\n" + "Tempo de execução (milisegundos): " + (tempoGasto) + "\n" + "Memória média usada durante o algoritmo: " + CNGR.getCPU() / (1024 * 1024) + " MB" + "\n" + 
+            String teste = "Início: " + Hora_antes + "\n" + "Fim: " + Hora_depois + "\n" + "Número de iterações: " + CGNR.getI() + "\n" + "Tempo de execução (milisegundos): " + (tempoGasto) + "\n" + "Memória média usada durante o algoritmo: " + CGNR.getCPU() / (1024 * 1024) + " MB" + "\n" + 
                     "Uso médio de CPU durante o algoritmo: " + (usoCPU * 100) + "%";
 
             OutputStream enviar = clientSocket.getOutputStream();
@@ -165,6 +165,15 @@ public class Server {
             clientSocket.close();
             g = null;
             h = null;
+            fH.delete();
+            fg.delete();
+            fH.delete();
+            fg.delete();
+            fH.delete();
+            fg.delete();
+            fH.delete();
+            fg.delete();
+            
 
         } catch (IOException e) {
             System.err.println("Erro ao processar cliente: " + e.getMessage());

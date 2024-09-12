@@ -13,6 +13,8 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -28,8 +30,12 @@ public class UsuarioClient extends JFrame {
     private JTextArea messageArea;
     private DoubleMatrix H;
     private DoubleMatrix g;
+    private String t;
+    private int j;
+    private String alg;
 
-    public UsuarioClient() {
+    public UsuarioClient() throws InterruptedException {
+    	t = "continuo";
         setTitle("Usuario Client");
         setSize(1440, 900);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -100,11 +106,14 @@ public class UsuarioClient extends JFrame {
         gbc.weighty = 0;
         JButton sendButton = new JButton("Send");
         add(sendButton, gbc);
+        j = 0;
+        alg = "";
 
         sendButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 try {
+                	j++;
 					sendMessage();
 				} catch (InterruptedException e1) {
 					// TODO Auto-generated catch block
@@ -117,21 +126,26 @@ public class UsuarioClient extends JFrame {
     }
 
     private void sendMessage() throws InterruptedException {
+    	
+
         String serverIP = ipField.getText();
         int port = Integer.parseInt(portField.getText());
         String nomeUsuario = nomeField.getText();
         String algoritmo = algoritmoField.getText();
-
+        alg = algoritmoField.getText();
+        int in = 0;
+        while(algoritmo.equals("continuo") || in == 0) {
+        in++;
         try (Socket socket = new Socket(serverIP, port)) {
+        	messageArea.repaint();
             OutputStream emissor = socket.getOutputStream();
             DataOutputStream saidaDados = new DataOutputStream(emissor);
 
+            GerarModeloSinal();
             saidaDados.writeUTF(nomeUsuario);
             saidaDados.flush();
-            saidaDados.writeUTF(algoritmo);
+            saidaDados.writeUTF(t);
             saidaDados.flush();
-
-            GerarModeloSinal();
             saidaDados.writeInt(H.rows);
             saidaDados.flush();
             saidaDados.writeInt(H.columns);
@@ -143,23 +157,23 @@ public class UsuarioClient extends JFrame {
 
             String fileH;
             String fileG ;
-            String t = algoritmoField.getText().toUpperCase();
-            if (algoritmoField.getText().equals("1") || t.equals("1G")) {
+            //String t = algoritmoField.getText().toUpperCase();
+            if (t.equals("1") || t.equals("1G")) {
                 fileH = ("h1.csv");
                 fileG = ("g1.csv");
-            } else if (algoritmoField.getText().equals("2") || t.equals("2G")) {
+            } else if (t.equals("2") || t.equals("2G")) {
                 fileH = ("h1.csv");
                 fileG = ("g2.csv");
-            } else if (algoritmoField.getText().equals("3") || t.equals("3G")) {
+            } else if (t.equals("3") || t.equals("3G")) {
                 fileH = ("h1.csv");
                 fileG = ("g3.csv");
-            } else if (algoritmoField.getText().equals("4") || t.equals("4G")) {
+            } else if (t.equals("4") || t.equals("4G")) {
                 fileH = ("h2.csv");
                 fileG = ("g4.csv");
-            } else if (algoritmoField.getText().equals("5") || t.equals("5G")) {
+            } else if (t.equals("5") || t.equals("5G")) {
                 fileH = ("h2.csv");
                 fileG = ("g5.csv");
-            } else if (algoritmoField.getText().equals("6") || t.equals("6G")) {
+            } else if (t.equals("6") || t.equals("6G")) {
                 fileH = ("h2.csv");
                 fileG = ("g6.csv");
             } else {
@@ -218,14 +232,28 @@ public class UsuarioClient extends JFrame {
 
             ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(imageBytes);
             BufferedImage receivedImage = ImageIO.read(byteArrayInputStream);
-            ImageDisplay.windows(receivedImage);
+            //ImageDisplay.windows(receivedImage);
             ImageIO.write(receivedImage, "png", new File(t + ".png"));
 
             String resposta = entradaDados.readUTF();
             messageArea.append("Resposta do servidor: " + resposta + "\n");
-
+            socket.close();
+            try {
+                FileWriter escritor = new FileWriter("Relatorio_" + nomeUsuario + "_" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")) + ".txt");
+                escritor.write(resposta); 
+                escritor.close(); 
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         } catch (IOException e) {
             messageArea.append("Erro de conexão: " + e.getMessage() + "\n");
+        }
+        messageArea.revalidate();
+        messageArea.repaint();
+        if(algoritmo.equals("continuo"))
+        {
+        	Thread.sleep(2000);
+        }
         }
     }
 
@@ -239,57 +267,56 @@ public class UsuarioClient extends JFrame {
         int rows = 11520;
         int sqrtColumns = 60;
         int columns = sqrtColumns * sqrtColumns;
-        String t = algoritmoField.getText().toUpperCase();
-        if(algoritmoField.getText().equals("1") || t.equals("1G")) 
+        t = algoritmoField.getText().toUpperCase();
+        if (!t.equals("1") && !t.equals("2") && !t.equals("3") && !t.equals("4") &&
+                !t.equals("5") && !t.equals("6") && !t.equals("1G") && !t.equals("2G") &&
+                !t.equals("3G") && !t.equals("4G") && !t.equals("5G") && !t.equals("6G"))
+        {
+            String[] elements = {"1", "2", "4", "5", "6", "1G", "2G", "4G", "5G", "6G"};
+            Random r = new Random();
+            t = elements[r.nextInt(elements.length)];
+        }
+        if(t.equals("1") || t.equals("1G")) 
         {
         	H = lerCSVParaDoubleMatrix("h1.csv");
         	g = lerCSVParaDoubleMatrix("g1.csv");
         }
-        else if(algoritmoField.getText().equals("2") || t.equals("2G")) 
+        else if(t.equals("2") || t.equals("2G")) 
         {
         	H = lerCSVParaDoubleMatrix("h1.csv");
         	g = lerCSVParaDoubleMatrix("g2.csv");
         }
-        else if(algoritmoField.getText().equals("3") || t.equals("3G")) 
+        else if(t.equals("3") || t.equals("3G")) 
         {
         	H = lerCSVParaDoubleMatrix("h1.csv");
         	g = lerCSVParaDoubleMatrix("g3.csv");
         }
-        else if(algoritmoField.getText().equals("4") || t.equals("4G")) 
+        else if(t.equals("4") || t.equals("4G")) 
         {
         	H = lerCSVParaDoubleMatrix("h2.csv");
         	g = lerCSVParaDoubleMatrix("g4.csv");
         }
-        else if(algoritmoField.getText().equals("5") || t.equals("5G")) 
+        else if(t.equals("5") || t.equals("5G")) 
         {
         	H = lerCSVParaDoubleMatrix("h2.csv");
         	g = lerCSVParaDoubleMatrix("g5.csv");
         }
-        else if(algoritmoField.getText().equals("6") || t.equals("6G")) 
+        else if(t.equals("6") || t.equals("6G")) 
         {
         	H = lerCSVParaDoubleMatrix("h2.csv");
         	g = lerCSVParaDoubleMatrix("g6.csv");
         }
-        else
-        {
-        DoubleMatrix modelo = DoubleMatrix.zeros(rows, columns);
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < columns; j++) {
-                if (random.nextDouble() < 0.01) {
-                    modelo.put(i, j, random.nextDouble() * 1e-6);
-                }
-            }
-        }
-        H = modelo;
-        DoubleMatrix f = DoubleMatrix.rand(H.columns, 1);
-        g = H.mmul(f);
-        salvarDoubleMatrixEmCSV(H, "Hal.csv");
-        salvarDoubleMatrixEmCSV(g, "Gal.csv");
-        }
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new UsuarioClient());
+        SwingUtilities.invokeLater(() -> {
+			try {
+				new UsuarioClient();
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		});
     }
     
     

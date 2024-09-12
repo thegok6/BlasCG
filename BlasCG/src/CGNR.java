@@ -14,13 +14,14 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
+import org.ejml.data.DMatrixSparseCSC;
 import org.jblas.DoubleMatrix;
 import org.jblas.Eigen;
 import org.jblas.MatrixFunctions;
 
 import oshi.SystemInfo;
 import oshi.hardware.GlobalMemory;
-public class CNGR {
+public class CGNR {
 	private static int iteracoes = 0;
 	private static long memoriaMediaUsada = 0;
 	public static DoubleMatrix Calcular(DoubleMatrix h, DoubleMatrix g,int n,int ganho)
@@ -45,20 +46,64 @@ public class CNGR {
 		double alp = 0;
 		while(erro > 0.0001)
 		{
-			long startTime = System.currentTimeMillis();
-			long endTime = System.currentTimeMillis();
-			long timeSpent = (endTime - startTime);
+			long startTime, endTime, duration;
 			iteracoes++;
+			startTime = System.nanoTime();
 			w = CalcularW(h, p);
+			endTime = System.nanoTime();
+			duration = (endTime - startTime) / 1000000; // convert to milliseconds
+			System.out.println("CalcularW took: " + duration + " ms");
+
+			// Measure time for CalcularAlpha
+			startTime = System.nanoTime();
 			alp = CalcularAlpha(z, w);
+			endTime = System.nanoTime();
+			duration = (endTime - startTime) / 1000000;
+			System.out.println("CalcularAlpha took: " + duration + " ms");
+
+			// Measure time for CalcularF
+			startTime = System.nanoTime();
 			f = CalcularF(f, alp, p);
+			endTime = System.nanoTime();
+			duration = (endTime - startTime) / 1000000;
+			System.out.println("CalcularF took: " + duration + " ms");
+
+			// Measure time for CalcularR
 			DoubleMatrix rAntes = r;
+			startTime = System.nanoTime();
 			r = CalcularR(r, alp, w);
+			endTime = System.nanoTime();
+			duration = (endTime - startTime) / 1000000;
+			System.out.println("CalcularR took: " + duration + " ms");
+
+			// Measure time for CalcularZ
 			DoubleMatrix zAntes = z;
+			startTime = System.nanoTime();
 			z = CalcularZ(H_T, r);
-			beta = CalcularBeta(z,zAntes);
+			endTime = System.nanoTime();
+			duration = (endTime - startTime) / 1000000;
+			System.out.println("CalcularZ took: " + duration + " ms");
+
+			// Measure time for CalcularBeta
+			startTime = System.nanoTime();
+			beta = CalcularBeta(z, zAntes);
+			endTime = System.nanoTime();
+			duration = (endTime - startTime) / 1000000;
+			System.out.println("CalcularBeta took: " + duration + " ms");
+
+			// Measure time for CalcularP
+			startTime = System.nanoTime();
 			p = CalcularP(z, beta, p);
+			endTime = System.nanoTime();
+			duration = (endTime - startTime) / 1000000;
+			System.out.println("CalcularP took: " + duration + " ms");
+
+			// Measure time for Erro
+			startTime = System.nanoTime();
 			erro = Erro(r, rAntes);
+			endTime = System.nanoTime();
+			duration = (endTime - startTime) / 1000000;
+			System.out.println("Erro took: " + duration + " ms");
             long memoriaDisponivel = memory.getAvailable();
             long memoriaUsada = runtime.totalMemory() - runtime.freeMemory();
             leiturasDeMemoria.add(memoriaUsada);
@@ -100,6 +145,9 @@ public class CNGR {
         return r_i.sub(w_i.mul(alpha_i));
     }
 	
+	private static final int NUM_THREADS = Runtime.getRuntime().availableProcessors();
+
+
 	private static DoubleMatrix CalcularZ(DoubleMatrix H_T, DoubleMatrix r) {
         return (H_T).mmul(r);
     }
@@ -140,7 +188,7 @@ public class CNGR {
 	
 	
 	
-	/*public static void main(String[] args)
+	public static void main(String[] args) throws IOException
 	{
         int minRows = 8000;
         int maxRows = 56000;
@@ -150,13 +198,12 @@ public class CNGR {
 		
 		
         
-		DoubleMatrix g = lerCSVParaDoubleMatrix("g2.csv");
-        //DoubleMatrix Imagem = Calcular(H, g);
-        ImageGenerator.gerarImagem(Imagem, "teste.png");
-        salvarEmCSV(Imagem, "texto.csv");
+		DoubleMatrix g = lerCSVParaDoubleMatrix("g3.csv");
+        DoubleMatrix Imagem = Calcular(H, g, 64, 794);
+        //ImageGenerator.gerarImagem(Imagem, "teste.png");
+        //salvarEmCSV(Imagem, "texto.csv");
         
 	}
-	*/
 	
 	
 	
@@ -296,6 +343,63 @@ public class CNGR {
             soma += leitura;
         }
         return soma / leiturasDeMemoria.size(); 
+    }
+    
+    
+    
+    
+    
+    public static DMatrixSparseCSC convertToSparse(DoubleMatrix matrix) {
+        int rows = matrix.rows;
+        int cols = matrix.columns;
+
+        // Estimate number of non-zero elements
+        int nonZeroCount = 0;
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                if (matrix.get(i, j) != 0) {
+                    nonZeroCount++;
+                }
+            }
+        }
+
+        // Create sparse matrix with estimated non-zero elements
+        DMatrixSparseCSC sparseMatrix = new DMatrixSparseCSC(rows, cols, nonZeroCount);
+
+        // Insert non-zero values into sparse matrix
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                double value = matrix.get(i, j);
+                if (value != 0) {
+                    sparseMatrix.set(i, j, value);
+                }
+            }
+        }
+
+        return sparseMatrix;
+    }
+    public static DoubleMatrix convertToDense(DMatrixSparseCSC sparseMatrix) {
+        int rows = sparseMatrix.numRows;
+        int cols = sparseMatrix.numCols;
+
+        // Create a dense DoubleMatrix initialized with zeros
+        DoubleMatrix denseMatrix = new DoubleMatrix(rows, cols);
+
+        // Iterate over the non-zero elements in the sparse matrix
+        for (int col = 0; col < sparseMatrix.numCols; col++) {
+            int idxStart = sparseMatrix.col_idx[col];
+            int idxEnd = sparseMatrix.col_idx[col + 1];
+
+            for (int i = idxStart; i < idxEnd; i++) {
+                int row = sparseMatrix.nz_rows[i];
+                double value = sparseMatrix.nz_values[i];
+
+                // Set the non-zero value in the dense matrix
+                denseMatrix.put(row, col, value);
+            }
+        }
+
+        return denseMatrix;
     }
 	
 	
