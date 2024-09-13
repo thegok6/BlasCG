@@ -30,8 +30,8 @@ import java.awt.image.BufferedImage;
 
 public class Server {
 
-    private static final int PORT = 5178;
-    private static final String SERVER_IP = "26.193.34.184";
+    private static int PORT = 5178;
+    private static String SERVER_IP = "26.193.34.184";
 
     
     private static final BlockingQueue<Socket> filaDeClientes = new LinkedBlockingQueue<>();
@@ -39,10 +39,12 @@ public class Server {
     public static void main(String[] args) {
         try (ServerSocket serverSocket = new ServerSocket()) {
 
-            InetAddress serverInetAddress = InetAddress.getByName("192.168.18.17");
-            serverSocket.bind(new InetSocketAddress(serverInetAddress, Integer.parseInt("5178")));
-            /*InetAddress serverInetAddress = InetAddress.getByName(args[0]);
-            serverSocket.bind(new InetSocketAddress(serverInetAddress, Integer.parseInt(args[1])));*/
+            /*InetAddress serverInetAddress = InetAddress.getByName("192.168.18.17");
+            serverSocket.bind(new InetSocketAddress(serverInetAddress, Integer.parseInt("5178")));*/
+            InetAddress serverInetAddress = InetAddress.getByName(args[0]);
+            serverSocket.bind(new InetSocketAddress(serverInetAddress, Integer.parseInt(args[1])));
+            PORT = Integer.parseInt(args[1]);
+            SERVER_IP = args[0];
             System.out.println("Servidor aberto: " + SERVER_IP + ":" + PORT);
 
             
@@ -100,14 +102,14 @@ public class Server {
             long sizeG = entradaDados.readLong();
 
             System.out.println("Recebendo arquivo H.csv de " + sizeH + " bytes...");
-            salvarArquivoCSV(entradaDados, "h.csv", sizeH);  // Recebe e salva H.csv
+            salvarArquivoCSV(entradaDados, "h.csv", sizeH);  
             File fH = new File("h.csv");
-           // decompressFileFromMemory(fH);
+           
 
             System.out.println("Recebendo arquivo G.csv de " + sizeG + " bytes...");
-            salvarArquivoCSV(entradaDados, "g.csv", sizeG);  // Recebe e salva G.csv
+            salvarArquivoCSV(entradaDados, "g.csv", sizeG);  
             File fg = new File("g.csv");
-            //decompressFileFromMemory(new File("g.zip"));
+            
 
             System.out.println("Arquivos H.csv e G.csv recebidos e salvos.");
 
@@ -208,13 +210,13 @@ public class Server {
         try (FileChannel fileChannel = FileChannel.open(
                 Path.of(nomeArquivo), 
                 StandardOpenOption.CREATE, 
-                StandardOpenOption.READ,  // Add READ permission
+                StandardOpenOption.READ,  
                 StandardOpenOption.WRITE)) {
 
-            // Memory-map the output file
+            
             MappedByteBuffer mappedBuffer = fileChannel.map(FileChannel.MapMode.READ_WRITE, 0, fileSize);
 
-            byte[] buffer = new byte[1024 * 1024]; // 1MB buffer
+            byte[] buffer = new byte[1024 * 1024]; 
             long totalBytesRead = 0;
             int bytesRead;
 
@@ -258,7 +260,7 @@ public class Server {
     }*/
     
     public static int[] getCSVDimensions(String csvFile) throws IOException {
-        int[] dimensions = new int[2]; // dimensions[0] = rows, dimensions[1] = cols
+        int[] dimensions = new int[2]; 
         int rowCount = 0;
         int colCount = 0;
         
@@ -267,7 +269,7 @@ public class Server {
             while ((line = br.readLine()) != null) {
                 rowCount++;
                 if (rowCount == 1) {
-                    String[] values = line.split(",");  // assuming comma-separated
+                    String[] values = line.split(",");  
                     colCount = values.length;
                 }
             }
@@ -280,9 +282,9 @@ public class Server {
         return dimensions;
     }
 
-    // Main method to read CSV into DoubleMatrix using memory-mapped file
+    
     public static DoubleMatrix lerCSVParaDoubleMatrix(String filePath) throws IOException {
-        // First, get the number of rows and columns from the CSV
+        
         int[] dimensions = getCSVDimensions(filePath);
         int rows = dimensions[0];
         int cols = dimensions[1];
@@ -294,26 +296,26 @@ public class Server {
             int row = 0;
             int col = 0;
             
-            // Temporary buffer to read CSV lines manually
+            
             StringBuilder sb = new StringBuilder();
             
-            // Loop through the buffer to extract CSV data
+            
             while (buffer.hasRemaining()) {
                 char c = (char) buffer.get();
                 
                 if (c == ',') {
-                    // End of value, parse and store
+                    
                     matrix.put(row, col, Double.parseDouble(sb.toString()));
-                    sb.setLength(0); // clear the StringBuilder for the next value
+                    sb.setLength(0); 
                     col++;
                 } else if (c == '\n') {
-                    // End of line, store last value and move to the next row
+                    
                     matrix.put(row, col, Double.parseDouble(sb.toString()));
                     sb.setLength(0);
                     row++;
-                    col = 0; // reset column index for next row
+                    col = 0; 
                 } else {
-                    sb.append(c); // Keep reading characters
+                    sb.append(c); 
                 }
             }
             return matrix;
@@ -326,7 +328,7 @@ public class Server {
 
             ZipEntry zipEntry = zipIn.getNextEntry();
             while (zipEntry != null) {
-                // Output to ByteArrayOutputStream in memory
+                
                 ByteArrayOutputStream fH = new ByteArrayOutputStream();
                 byte[] buffer = new byte[1024];
                 int length;
@@ -334,10 +336,10 @@ public class Server {
                     fH.write(buffer, 0, length);
                 }
 
-                // Save the decompressed entry (fH) to a file on disk
+                
                 File outputFile = new File("h.csv");
                 try (FileOutputStream fos = new FileOutputStream(outputFile)) {
-                    fH.writeTo(fos);  // Save the content of fH to the file
+                    fH.writeTo(fos);  
                 }
 
                 System.out.println("Decompressed and saved entry: " + zipEntry.getName());

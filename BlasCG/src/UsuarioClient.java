@@ -116,7 +116,7 @@ public class UsuarioClient extends JFrame {
                 	j++;
 					sendMessage();
 				} catch (InterruptedException e1) {
-					// TODO Auto-generated catch block
+					
 					e1.printStackTrace();
 				}
             }
@@ -157,7 +157,7 @@ public class UsuarioClient extends JFrame {
 
             String fileH;
             String fileG ;
-            //String t = algoritmoField.getText().toUpperCase();
+            
             if (t.equals("1") || t.equals("1G")) {
                 fileH = ("h1.csv");
                 fileG = ("g1.csv");
@@ -181,7 +181,7 @@ public class UsuarioClient extends JFrame {
                 fileG = ("Gal.csv");
             }
 
-            //fileH = compressFileToMemory(fileH);
+            
             /*long fileHSize = fileH.length();
             long fileGSize = fileG.length();
 
@@ -196,24 +196,24 @@ public class UsuarioClient extends JFrame {
 	                saidaDados.flush();
 	                saidaDados.writeLong(fileChannelG.size());
 	                saidaDados.flush();
-                   // Memory-map fileH
+                   
                    MappedByteBuffer bufferH = fileChannelH.map(MapMode.READ_ONLY, 0, fileChannelH.size());
                    byte[] bufferArrayH = new byte[bufferH.remaining()];
                    bufferH.get(bufferArrayH);
 
-                   // Send fileH
+                   
                    saidaDados.write(bufferArrayH);
                    saidaDados.flush();
 
-                   // Brief pause to ensure buffer flush
+                   
                    Thread.sleep(1000);
 
-                   // Memory-map fileG
+                   
                    MappedByteBuffer bufferG = fileChannelG.map(MapMode.READ_ONLY, 0, fileChannelG.size());
                    byte[] bufferArrayG = new byte[bufferG.remaining()];
                    bufferG.get(bufferArrayG);
 
-                   // Send fileG
+                   
                    saidaDados.write(bufferArrayG);
                    saidaDados.flush();
 
@@ -232,7 +232,7 @@ public class UsuarioClient extends JFrame {
 
             ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(imageBytes);
             BufferedImage receivedImage = ImageIO.read(byteArrayInputStream);
-            //ImageDisplay.windows(receivedImage);
+            
             ImageIO.write(receivedImage, "png", new File(t + ".png"));
 
             String resposta = entradaDados.readUTF();
@@ -272,7 +272,7 @@ public class UsuarioClient extends JFrame {
                 !t.equals("5") && !t.equals("6") && !t.equals("1G") && !t.equals("2G") &&
                 !t.equals("3G") && !t.equals("4G") && !t.equals("5G") && !t.equals("6G"))
         {
-            String[] elements = {"1", "2", "4", "5", "6", "1G", "2G", "4G", "5G", "6G"};
+            String[] elements = {"1", "2","3", "4", "5", "6", "1G", "2G","3G", "4G", "5G", "6G"};
             Random r = new Random();
             t = elements[r.nextInt(elements.length)];
         }
@@ -313,7 +313,7 @@ public class UsuarioClient extends JFrame {
 			try {
 				new UsuarioClient();
 			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
+				
 				e.printStackTrace();
 			}
 		});
@@ -351,7 +351,7 @@ public class UsuarioClient extends JFrame {
     }*/
     
     public static int[] getCSVDimensions(String csvFile) throws IOException {
-        int[] dimensions = new int[2]; // dimensions[0] = rows, dimensions[1] = cols
+        int[] dimensions = new int[2]; 
         int rowCount = 0;
         int colCount = 0;
         
@@ -360,7 +360,7 @@ public class UsuarioClient extends JFrame {
             while ((line = br.readLine()) != null) {
                 rowCount++;
                 if (rowCount == 1) {
-                    String[] values = line.split(",");  // assuming comma-separated
+                    String[] values = line.split(",");  
                     colCount = values.length;
                 }
             }
@@ -373,9 +373,9 @@ public class UsuarioClient extends JFrame {
         return dimensions;
     }
 
-    // Main method to read CSV into DoubleMatrix using memory-mapped file
+    
     public static DoubleMatrix lerCSVParaDoubleMatrix(String filePath) throws IOException {
-        // First, get the number of rows and columns from the CSV
+        
         int[] dimensions = getCSVDimensions(filePath);
         int rows = dimensions[0];
         int cols = dimensions[1];
@@ -387,26 +387,26 @@ public class UsuarioClient extends JFrame {
             int row = 0;
             int col = 0;
             
-            // Temporary buffer to read CSV lines manually
+            
             StringBuilder sb = new StringBuilder();
             
-            // Loop through the buffer to extract CSV data
+            
             while (buffer.hasRemaining()) {
                 char c = (char) buffer.get();
                 
                 if (c == ',') {
-                    // End of value, parse and store
+                    
                     matrix.put(row, col, Double.parseDouble(sb.toString()));
-                    sb.setLength(0); // clear the StringBuilder for the next value
+                    sb.setLength(0); 
                     col++;
                 } else if (c == '\n') {
-                    // End of line, store last value and move to the next row
+                    
                     matrix.put(row, col, Double.parseDouble(sb.toString()));
                     sb.setLength(0);
                     row++;
-                    col = 0; // reset column index for next row
+                    col = 0; 
                 } else {
-                    sb.append(c); // Keep reading characters
+                    sb.append(c); 
                 }
             }
             return matrix;
@@ -419,10 +419,10 @@ public class UsuarioClient extends JFrame {
                 for (int j = 0; j < matrix.columns; j++) {
                     writer.append(String.valueOf(matrix.get(i, j)));
                     if (j < matrix.columns - 1) {
-                        writer.append(",");  // Se não for o último valor da linha, adiciona vírgula
+                        writer.append(",");  
                     }
                 }
-                writer.append("\n");  // Vai para a próxima linha
+                writer.append("\n");  
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -447,7 +447,7 @@ public class UsuarioClient extends JFrame {
             throw new IOException("Error compressing file: " + e.getMessage());
         }
 
-        // Convert the byte array to a File object
+        
         File compressedFile = new File("hrar" + ".zip");
         try (FileOutputStream fos = new FileOutputStream(compressedFile)) {
             byteArrayOutputStream.writeTo(fos);

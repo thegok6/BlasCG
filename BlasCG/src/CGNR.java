@@ -51,24 +51,24 @@ public class CGNR {
 			startTime = System.nanoTime();
 			w = CalcularW(h, p);
 			endTime = System.nanoTime();
-			duration = (endTime - startTime) / 1000000; // convert to milliseconds
+			duration = (endTime - startTime) / 1000000; 
 			System.out.println("CalcularW took: " + duration + " ms");
 
-			// Measure time for CalcularAlpha
+			
 			startTime = System.nanoTime();
 			alp = CalcularAlpha(z, w);
 			endTime = System.nanoTime();
 			duration = (endTime - startTime) / 1000000;
 			System.out.println("CalcularAlpha took: " + duration + " ms");
 
-			// Measure time for CalcularF
+			
 			startTime = System.nanoTime();
 			f = CalcularF(f, alp, p);
 			endTime = System.nanoTime();
 			duration = (endTime - startTime) / 1000000;
 			System.out.println("CalcularF took: " + duration + " ms");
 
-			// Measure time for CalcularR
+			
 			DoubleMatrix rAntes = r;
 			startTime = System.nanoTime();
 			r = CalcularR(r, alp, w);
@@ -76,7 +76,7 @@ public class CGNR {
 			duration = (endTime - startTime) / 1000000;
 			System.out.println("CalcularR took: " + duration + " ms");
 
-			// Measure time for CalcularZ
+			
 			DoubleMatrix zAntes = z;
 			startTime = System.nanoTime();
 			z = CalcularZ(H_T, r);
@@ -84,21 +84,21 @@ public class CGNR {
 			duration = (endTime - startTime) / 1000000;
 			System.out.println("CalcularZ took: " + duration + " ms");
 
-			// Measure time for CalcularBeta
+			
 			startTime = System.nanoTime();
 			beta = CalcularBeta(z, zAntes);
 			endTime = System.nanoTime();
 			duration = (endTime - startTime) / 1000000;
 			System.out.println("CalcularBeta took: " + duration + " ms");
 
-			// Measure time for CalcularP
+			
 			startTime = System.nanoTime();
 			p = CalcularP(z, beta, p);
 			endTime = System.nanoTime();
 			duration = (endTime - startTime) / 1000000;
 			System.out.println("CalcularP took: " + duration + " ms");
 
-			// Measure time for Erro
+			
 			startTime = System.nanoTime();
 			erro = Erro(r, rAntes);
 			endTime = System.nanoTime();
@@ -200,8 +200,8 @@ public class CGNR {
         
 		DoubleMatrix g = lerCSVParaDoubleMatrix("g3.csv");
         DoubleMatrix Imagem = Calcular(H, g, 64, 794);
-        //ImageGenerator.gerarImagem(Imagem, "teste.png");
-        //salvarEmCSV(Imagem, "texto.csv");
+        
+        
         
 	}
 	
@@ -243,7 +243,7 @@ public class CGNR {
 	
 	
 	    public static int[] getCSVDimensions(String csvFile) throws IOException {
-        int[] dimensions = new int[2]; // dimensions[0] = rows, dimensions[1] = cols
+        int[] dimensions = new int[2]; 
         int rowCount = 0;
         int colCount = 0;
         
@@ -252,7 +252,7 @@ public class CGNR {
             while ((line = br.readLine()) != null) {
                 rowCount++;
                 if (rowCount == 1) {
-                    String[] values = line.split(",");  // assuming comma-separated
+                    String[] values = line.split(",");  
                     colCount = values.length;
                 }
             }
@@ -265,9 +265,9 @@ public class CGNR {
         return dimensions;
     }
 
-    // Main method to read CSV into DoubleMatrix using memory-mapped file
+    
     public static DoubleMatrix lerCSVParaDoubleMatrix(String filePath) throws IOException {
-        // First, get the number of rows and columns from the CSV
+        
         int[] dimensions = getCSVDimensions(filePath);
         int rows = dimensions[0];
         int cols = dimensions[1];
@@ -279,26 +279,26 @@ public class CGNR {
             int row = 0;
             int col = 0;
             
-            // Temporary buffer to read CSV lines manually
+            
             StringBuilder sb = new StringBuilder();
             
-            // Loop through the buffer to extract CSV data
+            
             while (buffer.hasRemaining()) {
                 char c = (char) buffer.get();
                 
                 if (c == ',') {
-                    // End of value, parse and store
+                    
                     matrix.put(row, col, Double.parseDouble(sb.toString()));
-                    sb.setLength(0); // clear the StringBuilder for the next value
+                    sb.setLength(0); 
                     col++;
                 } else if (c == '\n') {
-                    // End of line, store last value and move to the next row
+                    
                     matrix.put(row, col, Double.parseDouble(sb.toString()));
                     sb.setLength(0);
                     row++;
-                    col = 0; // reset column index for next row
+                    col = 0; 
                 } else {
-                    sb.append(c); // Keep reading characters
+                    sb.append(c); 
                 }
             }
             return matrix;
@@ -353,7 +353,7 @@ public class CGNR {
         int rows = matrix.rows;
         int cols = matrix.columns;
 
-        // Estimate number of non-zero elements
+        
         int nonZeroCount = 0;
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
@@ -363,10 +363,10 @@ public class CGNR {
             }
         }
 
-        // Create sparse matrix with estimated non-zero elements
+        
         DMatrixSparseCSC sparseMatrix = new DMatrixSparseCSC(rows, cols, nonZeroCount);
 
-        // Insert non-zero values into sparse matrix
+        
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
                 double value = matrix.get(i, j);
@@ -382,10 +382,10 @@ public class CGNR {
         int rows = sparseMatrix.numRows;
         int cols = sparseMatrix.numCols;
 
-        // Create a dense DoubleMatrix initialized with zeros
+        
         DoubleMatrix denseMatrix = new DoubleMatrix(rows, cols);
 
-        // Iterate over the non-zero elements in the sparse matrix
+        
         for (int col = 0; col < sparseMatrix.numCols; col++) {
             int idxStart = sparseMatrix.col_idx[col];
             int idxEnd = sparseMatrix.col_idx[col + 1];
@@ -394,7 +394,7 @@ public class CGNR {
                 int row = sparseMatrix.nz_rows[i];
                 double value = sparseMatrix.nz_values[i];
 
-                // Set the non-zero value in the dense matrix
+                
                 denseMatrix.put(row, col, value);
             }
         }
